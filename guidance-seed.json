@@ -1,0 +1,27 @@
+[
+  {
+    "rule": "When a summary identifies significant limitations (incomplete access, lack of substantive details, or commercial presentation) that undermine verification, those concerns should proportionally reduce the confidence rating rather than being noted but ignored.",
+    "scope": "Outcome/Result Claim",
+    "timesApplied": 0
+  },
+  {
+    "rule": "If a comparison video's title claims comprehensiveness (e.g. 'best', 'most hyped', 'ultimate') but notably omits major categories or well-regarded options acknowledged in comments, treat the title-scope mismatch as a credibility issue and reflect this in the rating.",
+    "scope": "Comparison",
+    "timesApplied": 0
+  },
+  {
+    "rule": "When a tutorial's instructions are technically clear but the premise or claims significantly misrepresent capabilities or omit critical safety/functionality gaps that viewers identify as problems, weight trust and accuracy of the core claim heavily\u2014not just execution clarity\u2014in the overall rating.",
+    "scope": "Tutorial/Howto",
+    "timesApplied": 0
+  },
+  {
+    "rule": "When a video omits or glosses over a critical prerequisite, condition, or foundational assumption for the advice/concept presented, downgrade the verdict rating to reflect incompleteness as a material accuracy issue, not merely a stylistic choice.",
+    "scope": "Explainer/Concept",
+    "timesApplied": 0
+  },
+  {
+    "rule": "When evaluating advice/opinion content, check whether commenters are questioning the absence of source attribution, citations, or links\u2014this signals potential credibility concerns that should be noted even if the core advice itself is validated.",
+    "scope": "Advice/Opinion",
+    "timesApplied": 0
+  }
+]

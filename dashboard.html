@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Consensus — Dashboard</title>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Consensus — Dashboard</h1>
+      <div class="actions">
+        <button id="exportBtn">Export CSV</button>
+        <button id="exportJsonBtn">Export JSON</button>
+        <button id="clearBtn" class="danger">Clear All</button>
+      </div>
+    </header>
+
+    <section class="cards" id="cards"></section>
+
+    <section class="guidance-wrap">
+      <div class="guidance-header">
+        <h2>Learned Guidance</h2>
+        <span class="muted">Standing rules distilled from your corrections — applied to every future analysis.</span>
+        <span class="guidance-header-actions">
+          <button id="exportGuidanceBtn">Export Guidance</button>
+          <button id="importGuidanceBtn">Import Guidance</button>
+          <input id="importGuidanceFile" type="file" accept="application/json" class="hidden" />
+        </span>
+      </div>
+      <p id="importGuidanceStatus" class="muted guidance-import-status hidden"></p>
+      <div id="guidanceEmpty" class="hidden muted guidance-empty">
+        No learned rules yet. Use "Redo w/ note" on an analysis to teach the rater something new.
+      </div>
+      <ul id="guidanceList" class="guidance-list"></ul>
+    </section>
+
+    <section class="table-wrap">
+      <table id="historyTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Date</th>
+            <th>Video</th>
+            <th>Category</th>
+            <th>Result</th>
+            <th>Insight</th>
+            <th>Accurate?</th>
+            <th>Your Notes</th>
+            <th>Redo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <p id="emptyState" class="hidden muted">No analyses logged yet. Rate a video, then refresh this page.</p>
+    </section>
+  </div>
+
+  <div class="modal-overlay hidden" id="insightModalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="title" id="insightModalTitle"></div>
+        <button class="close" id="insightModalClose">&times;</button>
+      </div>
+      <div class="meta-row" id="insightModalMeta"></div>
+      <div class="body-text" id="insightModalBody"></div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

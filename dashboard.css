@@ -1,0 +1,541 @@
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-hi);
+  margin: 0;
+  padding: 28px;
+}
+
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--text-hi);
+}
+
+.actions button {
+  margin-left: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg-2);
+  color: var(--text-hi);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+.actions button:hover {
+  background: #222;
+}
+
+.actions button.danger {
+  background: var(--red-bg);
+  border-color: #4a2622;
+  color: #ffb9ab;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+}
+
+.card .label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.card .value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--mint);
+  margin-top: 6px;
+}
+
+.table-wrap {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+th, td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  background: var(--card-bg-2);
+  position: sticky;
+  top: 0;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.video-cell a {
+  color: var(--text-hi);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.video-cell a:hover {
+  text-decoration: underline;
+}
+
+.rating-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.rating-good { background: var(--mint); color: var(--mint-text); }
+.rating-mid { background: var(--amber); color: var(--amber-text); }
+.rating-bad { background: var(--red); color: var(--red-text); }
+.rating-none { background: var(--card-bg-2); color: var(--text-mid); border: 1px solid var(--border); }
+
+/* Result cell wraps its badges/text as a flex row so a narrow column
+   breaks BETWEEN chunks (rating pill / verdict text / flag badge) rather
+   than wrapping mid-pill or mid-word — the modal reuses this same markup
+   with more room, so it doesn't need this wrap behavior there but isn't
+   hurt by it either. */
+.result-cell-inner {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.result-verdict {
+  white-space: nowrap;
+}
+
+.insight-cell {
+  max-width: 140px;
+}
+
+/* Insight column collapses to a single small affordance; the full text
+   lives in a modal (see #insightModalOverlay) so the table stays scannable
+   at a glance instead of a wide free-text column per row. */
+.insight-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.insight-btn:hover {
+  background: var(--card-bg-2);
+  color: var(--text-hi);
+}
+
+.insight-btn .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mint);
+  flex-shrink: 0;
+}
+
+.insight-btn.empty {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.insight-btn.empty:hover {
+  background: none;
+  color: var(--text-mid);
+}
+
+/* Insight detail modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal {
+  width: 420px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.modal-header .title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--text-hi);
+}
+
+.modal-header .close {
+  background: var(--card-bg-2);
+  border: none;
+  color: var(--text-mid);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 13px;
+  padding: 0;
+}
+
+.modal .meta-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.modal .body-text {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-mid);
+}
+
+.row-expand {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 2px 6px;
+  width: 100%;
+}
+
+.row-expand:hover {
+  color: var(--text-hi);
+}
+
+tr.detail-row td {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr.detail-row.hidden {
+  display: none;
+}
+
+.detail-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+.notes-input {
+  width: 180px;
+  min-height: 40px;
+  font-size: 12px;
+  font-family: inherit;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-bg-2);
+  color: var(--text-hi);
+  resize: vertical;
+}
+
+.thumbs {
+  display: flex;
+  gap: 4px;
+}
+
+.thumbs button {
+  border: 1px solid var(--border);
+  background: var(--card-bg-2);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 4px 7px;
+  font-size: 13px;
+}
+
+.thumbs button.active-up {
+  background: var(--mint);
+  border-color: var(--mint);
+}
+
+.thumbs button.active-down {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.delete-btn {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.delete-btn:hover {
+  color: var(--red);
+}
+
+.redo-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #3a2d52;
+  background: #1d1730;
+  color: #c7a9ff;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.redo-btn:hover:not(:disabled) {
+  background: #241c3d;
+}
+
+.redo-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.redo-status {
+  margin-top: 4px;
+  font-size: 11px;
+  min-height: 14px;
+  color: var(--text-dim);
+}
+
+.muted {
+  color: var(--text-dim);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.saved-flash {
+  outline: 2px solid var(--mint);
+}
+
+.guidance-wrap {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.guidance-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.guidance-header h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 16px;
+  margin: 0;
+  color: var(--text-hi);
+}
+
+.guidance-header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.guidance-header-actions button {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg-2);
+  color: var(--text-hi);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.guidance-header-actions button:hover {
+  background: #222;
+}
+
+.guidance-import-status {
+  font-size: 12px;
+  margin: -4px 0 10px;
+}
+
+.guidance-empty {
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+.guidance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guidance-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg-2);
+}
+
+.guidance-item.inactive {
+  opacity: 0.5;
+}
+
+.guidance-item .g-toggle {
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+.guidance-item .g-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.guidance-item .g-rule {
+  font-size: 13px;
+  outline: none;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  color: var(--text-hi);
+}
+
+.guidance-item .g-rule:focus {
+  background: var(--amber-bg);
+}
+
+.guidance-item .g-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.guidance-item .g-scope {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #241c3d;
+  color: #c7a9ff;
+  font-size: 10px;
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.guidance-item .g-severity-critical {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--red-bg);
+  color: #ffb9ab;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  margin-right: 6px;
+}
+
+.guidance-item .g-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.guidance-item .g-actions button {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+}
+
+.guidance-item .g-actions button:hover {
+  color: var(--red);
+}

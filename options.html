@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Consensus — Settings</title>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <h1>Consensus — Settings</h1>
+
+  <label for="provider">LLM Provider</label>
+  <select id="provider">
+    <option value="openai">OpenAI</option>
+    <option value="anthropic">Anthropic (Claude)</option>
+    <option value="gemini">Google Gemini</option>
+  </select>
+
+  <label for="apiKey">API Key</label>
+  <div class="model-row">
+    <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
+    <button id="testKeyBtn" type="button" class="secondary small">Test API Key</button>
+  </div>
+  <p id="testKeyStatus" class="note"></p>
+
+  <label for="model">Model (optional — leave blank for default)</label>
+  <div class="model-row">
+    <input id="model" type="text" list="modelList" placeholder="e.g. gpt-4o-mini" />
+    <button id="fetchModelsBtn" type="button" class="secondary small">Fetch available models</button>
+  </div>
+  <datalist id="modelList"></datalist>
+  <p id="modelFetchStatus" class="note"></p>
+
+  <label for="sendLimitMode">Comments sent to the model (per analysis)</label>
+  <select id="sendLimitMode">
+    <option value="auto">Auto (recommended) — scales to the video's own comment count</option>
+    <option value="manual">Manual — pin an exact number</option>
+  </select>
+  <div id="sendLimitManualRow" class="hidden">
+    <input id="sendLimit" type="number" min="10" max="200" step="5" />
+  </div>
+  <p class="note">
+    We always fetch comments from the page (also scaled to the video's total
+    comment count), then rank them by likes, strip duplicates/low-content
+    noise (e.g. "lol", emoji-only), and send only the top N to the model.
+    <strong>Auto</strong> picks N for you — bigger videos get a larger,
+    more representative sample; small videos aren't padded with nothing.
+    <strong>Manual</strong> pins the old fixed behavior if you'd rather
+    control cost directly. Fewer sent = lower cost per analysis; more
+    sent = broader coverage.
+  </p>
+
+  <h2>Pricing (USD per 1,000,000 tokens)</h2>
+  <p class="note">
+    Used to estimate cost on the dashboard. Defaults match each provider's
+    default model above — edit these if you change models or prices change.
+  </p>
+
+  <div class="pricing-grid">
+    <div></div><div class="col-label">Input</div><div class="col-label">Output</div>
+
+    <label class="row-label">OpenAI</label>
+    <input id="priceOpenaiIn" type="number" step="0.001" min="0" />
+    <input id="priceOpenaiOut" type="number" step="0.001" min="0" />
+
+    <label class="row-label">Anthropic</label>
+    <input id="priceAnthropicIn" type="number" step="0.001" min="0" />
+    <input id="priceAnthropicOut" type="number" step="0.001" min="0" />
+
+    <label class="row-label">Gemini</label>
+    <input id="priceGeminiIn" type="number" step="0.001" min="0" />
+    <input id="priceGeminiOut" type="number" step="0.001" min="0" />
+  </div>
+
+  <button id="saveBtn">Save</button>
+  <button id="dashboardBtn" class="secondary">Open Dashboard</button>
+  <span id="status" class="muted"></span>
+
+  <p class="note">
+    Your API key is stored locally in this browser's extension storage and is sent directly
+    from your browser to the provider's API when you click "Rate this claim". It is never sent
+    anywhere else.
+  </p>
+
+  <script src="options.js"></script>
+</body>
+</html>

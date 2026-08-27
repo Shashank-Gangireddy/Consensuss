@@ -1,0 +1,45 @@
+#ycr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  width: fit-content;
+  user-select: none;
+  transition: filter 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#ycr-badge:hover {
+  filter: brightness(1.08);
+}
+
+.ycr-idle {
+  background: var(--card-bg-2);
+  color: var(--text-hi);
+}
+
+.ycr-loading {
+  background: #241c3d;
+  color: #c7a9ff;
+}
+
+.ycr-good {
+  background: var(--mint);
+  color: var(--mint-text);
+}
+
+.ycr-mid {
+  background: var(--amber);
+  color: var(--amber-text);
+}
+
+.ycr-bad {
+  background: var(--red);
+  color: var(--red-text);
+}

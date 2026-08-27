@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Consensus</title>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>Consensus</h1>
+    <div class="header-actions">
+      <button id="dashboardBtn" title="Dashboard">📊</button>
+      <button id="settingsBtn" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <div id="notYoutube" class="hidden">
+    <p>Open a YouTube video (a <code>/watch</code> page) to use this extension.</p>
+  </div>
+
+  <div id="app" class="hidden">
+    <p id="videoTitle" class="video-title"></p>
+
+    <button id="analyzeBtn" class="primary">Rate this claim</button>
+
+    <div id="status" class="muted"></div>
+
+    <div id="resultBox" class="hidden">
+      <p id="cacheLine" class="muted hidden"></p>
+      <div id="criticalFlagBox" class="hidden critical-flag-box">
+        <h3 id="criticalFlagLabel" class="critical-flag-label"></h3>
+        <p id="criticalFlagNote"></p>
+      </div>
+      <div id="guidanceEnforcementBox" class="hidden guidance-enforcement-box">
+        <h3 id="guidanceEnforcementLabel" class="guidance-enforcement-label"></h3>
+        <ul id="guidanceEnforcementList" class="guidance-enforcement-list"></ul>
+      </div>
+      <div class="rating-line" id="ratingHero">
+        <span id="ratingNum" class="rating-num"></span><span class="rating-frac">/10</span>
+        <span id="verdict" class="verdict"></span>
+      </div>
+      <p id="classificationLine" class="tag-line hidden"></p>
+      <p id="ratingDimLine" class="dim-line hidden"></p>
+      <p id="summary"></p>
+
+      <div id="recommendationBox" class="hidden">
+        <h3 id="recommendationLabel">Crowd Recommendation</h3>
+        <p id="recommendationText" class="recommendation-text"></p>
+      </div>
+
+      <p id="usageLine" class="muted"></p>
+
+      <button id="redditBtn" class="secondary-cta hidden">Check against Reddit</button>
+      <div id="redditStatus" class="muted"></div>
+
+      <div id="redditBox" class="hidden">
+        <h3 id="redditVerdictLabel" class="reddit-verdict-label"></h3>
+        <p id="redditSummary"></p>
+        <div id="redditRecBox" class="hidden">
+          <h3>Reddit's own pick</h3>
+          <p id="redditRecText" class="recommendation-text"></p>
+        </div>
+        <ul id="redditCitations" class="citation-list"></ul>
+        <p id="redditUsageLine" class="muted"></p>
+      </div>
+
+      <div id="supportBlock" class="hidden">
+        <h3 id="supportLabel">Supporting comments say</h3>
+        <ul id="supportList"></ul>
+      </div>
+      <div id="contraBlock" class="hidden">
+        <h3 id="contraLabel">Contradicting comments say</h3>
+        <ul id="contraList"></ul>
+      </div>
+    </div>
+
+    <div id="vibesBox" class="hidden">
+      <p id="vibesCacheLine" class="muted hidden"></p>
+      <p id="vibesPathTag" class="tag-line"></p>
+
+      <!-- Music mode (legacy cached results only — new analyses use consensusModeBox below) -->
+      <div id="vibeModeBox" class="hidden">
+        <p id="vibeSummary"></p>
+        <div id="moodTags" class="mood-tags"></div>
+        <div id="notableMomentsBlock" class="hidden">
+          <h3>Notable moments</h3>
+          <ul id="notableMomentsList"></ul>
+        </div>
+      </div>
+
+      <!-- Gaming/Entertainment/etc mode (legacy cached results only) -->
+      <div id="hotspotsModeBox" class="hidden">
+        <p id="overallTone"></p>
+        <div id="hotspotsBlock" class="hidden">
+          <h3>Discussion hotspots</h3>
+          <ul id="hotspotsList"></ul>
+        </div>
+      </div>
+
+      <!-- Unified consensus mode — current schema, used by every vibes category -->
+      <div id="consensusModeBox" class="hidden">
+        <div id="authenticityBox" class="hidden authenticity-box">
+          <h3 id="authenticityLabel" class="consensus-lean-label"></h3>
+          <p id="authenticityNote" class="muted"></p>
+        </div>
+        <h3 id="consensusLeanLabel" class="consensus-lean-label"></h3>
+        <p id="consensusTypeTag" class="tag-line hidden"></p>
+        <p id="consensusSummary"></p>
+        <p id="caveatLine" class="dim-line hidden"></p>
+        <div id="notableQuotesBlock" class="hidden">
+          <h3>What people are saying</h3>
+          <ul id="notableQuotesList"></ul>
+        </div>
+      </div>
+
+      <p id="vibesUsageLine" class="muted"></p>
+
+      <button id="communitiesBtn" class="secondary-cta hidden">Find relevant Reddit communities</button>
+      <div id="communitiesStatus" class="muted"></div>
+      <div id="communitiesBox" class="hidden">
+        <h3>Communities to explore</h3>
+        <ul id="communitiesList" class="citation-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

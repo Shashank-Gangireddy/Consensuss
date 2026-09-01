@@ -168,7 +168,10 @@ function detailRowHtml(entry) {
 
   let extra = '';
   if (entry.path !== 'vibes') {
-    extra = entry.ratingDimension ? `Judged on: ${escapeHtml(entry.ratingDimension)}` : '';
+    const bits = [];
+    if (entry.ratingDimension) bits.push(`Judged on: ${escapeHtml(entry.ratingDimension)}`);
+    if (entry.contested) bits.push('Disputed (substantial support + contradiction)');
+    extra = bits.join(' · ');
   } else if (!isLegacyVibesEntry(entry)) {
     const bits = [];
     if (entry.consensusType === 'Split-Opinion') bits.push('Split opinion (genuinely divided)');
@@ -271,9 +274,17 @@ function renderTable() {
 }
 
 function escapeHtml(str) {
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
+  // textContent->innerHTML round-trip encodes &, <, > but NOT " or ' (the
+  // DOM's text-node serializer only escapes what's needed for text-node
+  // context). This function's output gets reused inside quoted HTML
+  // attribute values elsewhere in this file (e.g. title="${escapeHtml(...)}")
+  // where LLM-generated text (critical_flag.note, unresolved guidance rule
+  // text) can contain a literal quote character and break out of the
+  // attribute. Explicitly encode all five HTML-significant characters so
+  // the result is safe in both text-node and quoted-attribute contexts.
+  return String(str ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
 }
 
 // Only accept http(s) URLs as clickable hrefs — rejects javascript:, data:,
@@ -425,7 +436,7 @@ async function redoWithNote(id, trInitial) {
 }
 
 function toCSV() {
-  const cols = ['ts','title','videoUrl','provider','model','path','commentsAnalyzed','commentsFetched','topCount','newestCount','fetchMethod','promptTokens','completionTokens','totalTokens','estCostUSD','evidenceVolume','rating','verdict','topRecommendation','criticalFlagCorroboration','criticalFlagNote','guidanceEnforcementOriginalRating','guidanceEnforcementRules','consensusType','consensusLean','agreementStrength','authenticityLean','helpful','note'];
+  const cols = ['ts','title','videoUrl','provider','model','path','commentsAnalyzed','commentsFetched','topCount','newestCount','fetchMethod','promptTokens','completionTokens','totalTokens','estCostUSD','evidenceVolume','rating','verdict','contested','topRecommendation','criticalFlagCorroboration','criticalFlagNote','guidanceEnforcementOriginalRating','guidanceEnforcementRules','consensusType','consensusLean','agreementStrength','authenticityLean','helpful','note'];
   const rows = [cols.join(',')];
   history.forEach(h => {
     rows.push(cols.map(c => {

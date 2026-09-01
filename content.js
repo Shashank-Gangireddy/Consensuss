@@ -95,9 +95,17 @@
     };
   }
 
+  // YouTube video IDs are always exactly 11 chars from this charset. Any
+  // other value (including attacker-supplied junk from a spoofed
+  // history.pushState navigation) is rejected here so it can never be used
+  // downstream as a cache/cooldown key — see checkForNavigation() and the
+  // security notes near ANALYSIS_COOLDOWN_MS in background.js.
+  const YOUTUBE_VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+
   function getVideoId() {
     try {
-      return new URL(location.href).searchParams.get('v');
+      const v = new URL(location.href).searchParams.get('v');
+      return YOUTUBE_VIDEO_ID_RE.test(v || '') ? v : null;
     } catch {
       return null;
     }
@@ -774,7 +782,16 @@
     }
   }
 
-  async function onBadgeClick() {
+  async function onBadgeClick(event) {
+    // Only react to genuine user input. The badge lives in the page's live
+    // DOM (content-script isolation is a JS-scope boundary, not a DOM
+    // boundary), so any other script with execution on youtube.com — e.g.
+    // another installed extension's content script, a userscript, or a
+    // YouTube-side XSS — could otherwise dispatch synthetic clicks on it in
+    // a loop to trigger unlimited real paid LLM calls. isTrusted is false
+    // for any event created via dispatchEvent()/click() from JS, and can't
+    // be spoofed by the dispatching script.
+    if (event && event.isTrusted === false) return;
     if (state.status === 'scraping' || state.status === 'analyzing') return;
     if (state.status === 'error') {
       alert('Consensus error: ' + state.error);

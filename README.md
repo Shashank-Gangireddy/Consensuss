@@ -2,12 +2,9 @@
 
 # Consensus
 
-A Chrome/Brave/Edge extension (Manifest V3) that rates whether a YouTube
-video's title claim holds up against what commenters actually reported.
-It scrapes up to 200 top-level comments straight from the page, sends
-them with the title to your own LLM API key, and returns a 1-10 rating,
-a verdict, and the supporting/contradicting points behind it, without
-letting one loud comment or a wall of copy-paste replies skew the score.
+Rates whether a YouTube video title's claimed outcome holds up, based on viewer comments.
+
+This extension reads the comments so you don't have to sit through 12 minutes to find out that you dont agree with the video. It srapes the comments from DOM, runs it against a set of no-nonsense rules, and arrives at a score that tells you straight up if this is worth your time, or skip it.
 
 **Live on the Chrome Web Store** · [consensuss.lol](https://consensuss.lol)
 
@@ -18,12 +15,10 @@ letting one loud comment or a wall of copy-paste replies skew the score.
 ## How it works
 
 1. On a YouTube `/watch` page, a badge appears next to the video title.
-2. Click it (or use the toolbar popup) to scroll through and scrape the
-   first ~40-200 top-level comments directly from the page DOM — no
+2. Click it (or use the toolbar popup) to scroll through and scrape the comments directly from the page DOM — no
    YouTube Data API, no Google Cloud key or quota needed.
 3. The title + comments are sent to your chosen LLM provider (OpenAI,
-   Anthropic, or Gemini) using an API key you supply and that never
-   leaves your browser except to call that provider directly.
+   Anthropic, or Gemini) using an API key you supply.
 4. The model returns:
    - a **1-10 rating** and a **verdict** (Confirmed / Mixed / Debunked / etc.)
    - a plain-language summary with supporting/contradicting points
@@ -34,7 +29,7 @@ letting one loud comment or a wall of copy-paste replies skew the score.
      content, bought engagement) without letting that override the
      claim rating on its own
 
-Comment ranking merges near-duplicate/echo replies into a single point of
+Note : Comment ranking merges near-duplicate/echo replies into a single point of
 evidence, and enforces a minimum-sample floor (fewer than 6 usable
 comments forces "Insufficient Evidence") — both borrowed from how Reddit
 (Wilson score confidence, Controversial-sort polarization) and Steam
@@ -42,26 +37,12 @@ comments forces "Insufficient Evidence") — both borrowed from how Reddit
 
 ## Setup
 
-Install the packaged version from the [Chrome Web Store](https://consensuss.lol).
+Install the packaged version from the
+  [Chrome Web Store](https://consensuss.lol).
 
 ## Privacy & security
 
-- **No backend.** Nothing is sent to a server the developer runs; your
-  API key and requests go straight from your browser to
-  OpenAI/Anthropic/Gemini.
-- API keys are stored in `chrome.storage.local` (respective browser only, not
-  synced).
-- Reddit cross-check requests are sent with `credentials: 'include'`,
-  which means they carry whatever `reddit.com` session cookie already
-  exists in your browser — if you're logged into Reddit, those requests
-  are attributable to your account like any other `reddit.com` tab, even
-  though no login is required to use the extension. No credential is
-  read or stored by Consensus itself.
-- Audited against OWASP's Browser Extension Vulnerabilities Cheat Sheet
-  and Chrome MV3 guidance: `postMessage` origin validation, message
-  sender verification, output escaping before any HTML insertion, a
-  global rate limit against runaway paid LLM calls, and explicit
-  `content_security_policy`. Full detail on the
+Full detail on the
   [public Security page](https://consensuss.lol/security/).
 
 ## Carrying Learned Guidance to another device
@@ -76,10 +57,10 @@ default:
   device merges it in, skipping near-duplicate rules automatically.
 - **Bundled seed (new installs):** overwrite `guidance-seed.json` with an
   exported guidance JSON before loading the extension to give every
-  fresh install that baseline — applied once, only if that device's
+  fresh install that baseline applied once, only if that device's
   guidance store is empty.
 
-## Limitations
+## Limitations to note
 
 - Comment scraping reads whatever YouTube has rendered in the DOM after
   auto-scrolling; sparsely-commented or comments-disabled videos yield

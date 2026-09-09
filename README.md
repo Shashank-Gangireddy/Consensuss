@@ -10,7 +10,13 @@ This extension reads the comments so you don't have to sit through 12 minutes to
 
 ## Screenshots
 
-<!-- TODO: add screenshots -->
+<img src="docs/screenshots/guidance-enforcement.jpg" width="360" alt="Popup showing a 5/10 Mixed rating on a claim, with a code-side guidance-enforcement notice explaining the rating was auto-adjusted from 6 to 5 because a learned guidance rule was detected as relevant but not reflected in the model's own score" />
+
+Rating card for a Review-format video, showing the guidance-enforcement
+check in action: the model returned a 6, but a learned rule about
+missing source attribution applied here and the model didn't actually
+adjust for it — so the code-side check caught that and forced the
+rating down to 5, with the reasoning shown rather than silently applied.
 
 ## How it works
 

@@ -23,13 +23,19 @@
   </div>
   <p id="testKeyStatus" class="note"></p>
 
-  <label for="model">Model (optional — leave blank for default)</label>
+  <label for="model">Model (required)</label>
   <div class="model-row">
-    <input id="model" type="text" list="modelList" placeholder="e.g. gpt-4o-mini" />
+    <input id="model" type="text" list="modelList" placeholder="e.g. gpt-4o-mini" required />
     <button id="fetchModelsBtn" type="button" class="secondary small">Fetch available models</button>
   </div>
   <datalist id="modelList"></datalist>
   <p id="modelFetchStatus" class="note"></p>
+  <p class="note">
+    There is no default model — pick one for your provider (use "Fetch
+    available models" after entering your API key, or type an exact model
+    id) before analyses will work. Providers periodically retire/rename
+    model ids, so if analysis starts failing, re-check this field.
+  </p>
 
   <label for="sendLimitMode">Comments sent to the model (per analysis)</label>
   <select id="sendLimitMode">

@@ -1,13 +1,8 @@
 // background.js — service worker: owns settings + calls the chosen LLM provider + logs usage/cost.
 
-const DEFAULT_MODELS = {
-  openai: 'gpt-4o-mini',
-  anthropic: 'claude-3-5-haiku-20241022',
-  gemini: 'gemini-1.5-flash'
-};
-
-// USD per 1,000,000 tokens. These match the DEFAULT_MODELS above as of extension
-// build time — prices drift and change per-model, so they're editable in Options.
+// USD per 1,000,000 tokens. Only used to estimate cost on the dashboard —
+// independent of any hardcoded model default (there isn't one; the user
+// must pick a model in Options, see getSettings()/requireModel() below).
 const DEFAULT_PRICING = {
   openai: { input: 0.15, output: 0.60 },
   anthropic: { input: 0.80, output: 4.00 },
@@ -193,6 +188,22 @@ function checkRedditCooldown(videoId) {
 async function getSettings() {
   const { settings } = await chrome.storage.local.get('settings');
   return settings || { provider: 'openai', apiKey: '', model: '', pricing: {} };
+}
+
+// No hardcoded per-provider default model anymore — the user must pick and
+// save a specific model in Options (via "Fetch available models" or typing
+// one in directly). Called right alongside the existing "No API key set"
+// guard in each analyze*/validateWithReddit function below, so a missing
+// model is caught with the same clear, actionable error before any LLM
+// call is attempted — rather than silently falling back to a guessed model
+// id that may be retired/renamed/unavailable to this key (the exact bug
+// that caused "Empty model response" before).
+function requireModel(settings) {
+  const model = (settings.model || '').trim();
+  if (!model) {
+    throw new Error('No model selected. Open the extension options, fetch available models for your provider, and choose one.');
+  }
+  return model;
 }
 
 async function getPricing(provider) {
@@ -551,7 +562,7 @@ async function callOpenAI({ apiKey, model }, system, user) {
       Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: model || DEFAULT_MODELS.openai,
+      model,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user }
@@ -581,7 +592,7 @@ async function callAnthropic({ apiKey, model }, system, user) {
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: model || DEFAULT_MODELS.anthropic,
+      model,
       max_tokens: 1024,
       system,
       messages: [{ role: 'user', content: user }]
@@ -589,7 +600,26 @@ async function callAnthropic({ apiKey, model }, system, user) {
   });
   if (!res.ok) throw new Error(`Anthropic API error ${res.status}: ${await res.text()}`);
   const data = await res.json();
-  const text = data.content?.map(b => b.text).join('\n');
+  const textBlocks = (data.content || []).filter(b => b && b.type === 'text' && typeof b.text === 'string');
+  const text = textBlocks.map(b => b.text).join('\n');
+  if (!text) {
+    // res.ok but no usable text — surface WHY instead of a bare "Empty
+    // model response". stop_reason: 'refusal' means Anthropic's safety
+    // classifier tripped (most likely on raw untrusted comment content);
+    // 'max_tokens' means it got cut off before producing any text block
+    // (bump max_tokens); anything else + non-text blocks (e.g. only a
+    // 'thinking' block present) points at a model/param mismatch.
+    const blockTypes = (data.content || []).map(b => b?.type).join(',') || '(none)';
+    throw new Error(
+      `Anthropic returned no text content. stop_reason="${data.stop_reason || 'unknown'}", ` +
+      `content block types=[${blockTypes}]. ` +
+      (data.stop_reason === 'refusal'
+        ? 'The model refused this request (likely flagged by safety filtering on the comment content).'
+        : data.stop_reason === 'max_tokens'
+        ? 'Response was cut off before any text was produced — try raising max_tokens.'
+        : 'Raw response: ' + JSON.stringify(data).slice(0, 500))
+    );
+  }
   const result = extractJson(text);
   const usage = {
     promptTokens: data.usage?.input_tokens || 0,
@@ -600,7 +630,7 @@ async function callAnthropic({ apiKey, model }, system, user) {
 }
 
 async function callGemini({ apiKey, model }, system, user) {
-  const m = model || DEFAULT_MODELS.gemini;
+  const m = model;
   // encodeURIComponent both the model id and key even though they're
   // normally "clean" strings — model is free-typed by the user in Options
   // and the key is provider-issued, but neither is validated against a
@@ -1303,6 +1333,7 @@ async function validateWithReddit(meta) {
   if (!settings.apiKey) {
     throw new Error('No API key set. Open the extension options to add one.');
   }
+  requireModel(settings);
   checkRedditCooldown(meta.videoId);
 
   const { title, ytResult } = meta;
@@ -1731,6 +1762,7 @@ async function analyzeClaim(title, comments, meta = {}) {
   if (!settings.apiKey) {
     throw new Error('No API key set. Open the extension options to add one.');
   }
+  requireModel(settings);
   checkAnalysisCooldown(meta.videoId); // throws if called again too soon for the same video
 
   // If this call carries a human correction, grab whatever's currently
@@ -1946,7 +1978,7 @@ async function analyzeClaim(title, comments, meta = {}) {
     videoUrl: meta.url || null,
     title,
     provider,
-    model: settings.model || DEFAULT_MODELS[provider],
+    model: settings.model,
     commentsFetched: totalFetched,
     commentsAnalyzed: selectedComments.length,
     topCount: meta.topCount ?? null,       // "Top" pool count at fetch time — persisted so the dashboard shows the real historical split, not the 0 that live state resets to on a later cache-hit reload
@@ -2018,6 +2050,7 @@ async function analyzeVibes(title, comments, meta = {}) {
   if (!settings.apiKey) {
     throw new Error('No API key set. Open the extension options to add one.');
   }
+  requireModel(settings);
   checkAnalysisCooldown(meta.videoId); // same burst guard as the consensus path, same key space (one call per video either way)
 
   const sendLimit = resolveSendLimit(settings, meta.totalCommentCount);
@@ -2093,7 +2126,7 @@ async function analyzeVibes(title, comments, meta = {}) {
     videoUrl: meta.url || null,
     title,
     provider,
-    model: settings.model || DEFAULT_MODELS[provider],
+    model: settings.model,
     commentsFetched: totalFetched,
     commentsAnalyzed: selectedComments.length,
     topCount: meta.topCount ?? null,       // "Top" pool count at fetch time — persisted so the dashboard shows the real historical split, not the 0 that live state resets to on a later cache-hit reload

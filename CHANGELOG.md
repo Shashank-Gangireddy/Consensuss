@@ -4,6 +4,30 @@ All notable changes to the Consensus extension are logged here. Bump the
 version in `manifest.json` alongside every entry — the Chrome Web Store
 rejects a re-upload with an unchanged version number.
 
+## [3.8.0] - 2026-09-09
+- **Removed hardcoded default models.** Previously, leaving the Model field
+  blank in Options silently fell back to a per-provider default
+  (`gpt-4o-mini` / `claude-3-5-haiku-20241022` / `gemini-1.5-flash`). The
+  Anthropic default had been retired by Anthropic and returned a 404 on
+  every call, which — combined with the old `callAnthropic` swallowing a
+  non-text response into a bare "Empty model response" — made the real
+  cause invisible. Providers can retire/rename model ids at any time, so
+  guessing one is inherently fragile. Now:
+  - There is no default for any provider. `background.js` calls
+    `requireModel()` before ever attempting an LLM request; if no model is
+    saved, the error is immediately actionable ("No model selected. Open
+    the extension options, fetch available models for your provider, and
+    choose one.") instead of a silent bad guess or a generic failure two
+    layers downstream.
+  - The Model field in Options is now marked required (`required` HTML
+    attribute + Save-time validation), and the help text explains why
+    there's no default and points at "Fetch available models".
+  - `callAnthropic` also now inspects `stop_reason` and content block
+    types when a 200 response contains no usable text (e.g. a safety
+    refusal or `max_tokens` cutoff before any text block) and reports the
+    specific reason instead of a bare "Empty model response".
+- No new permissions, host_permissions, or CSP changes — logic-only.
+
 ## [3.7.1] - 2026-09-01
 - Security hardening (proactive audit, no known incident):
   - Badge click handler now requires `event.isTrusted` — a synthetic

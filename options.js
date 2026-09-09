@@ -33,10 +33,17 @@ $('sendLimitMode').addEventListener('change', () => {
 });
 
 $('saveBtn').addEventListener('click', async () => {
+  const model = $('model').value.trim();
+  if (!model) {
+    $('status').textContent = 'Enter or fetch a model first — there is no default.';
+    $('status').style.color = '#a11212';
+    $('model').focus();
+    return;
+  }
   const settings = {
     provider: $('provider').value,
     apiKey: $('apiKey').value.trim(),
-    model: $('model').value.trim(),
+    model,
     sendLimitAuto: $('sendLimitMode').value === 'auto',
     sendLimit: Math.max(10, Math.min(200, Number($('sendLimit').value) || 60)),
     pricing: {
@@ -46,6 +53,7 @@ $('saveBtn').addEventListener('click', async () => {
     }
   };
   await chrome.storage.local.set({ settings });
+  $('status').style.color = '';
   $('status').textContent = 'Saved.';
   setTimeout(() => ($('status').textContent = ''), 2000);
 });

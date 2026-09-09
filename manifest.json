@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Consensus",
-  "version": "3.7.1",
+  "version": "3.8.0",
   "description": "Rates whether a YouTube video title's claimed outcome holds up, based on viewer comments.",
   "permissions": ["storage", "scripting", "tabs"],
   "host_permissions": [

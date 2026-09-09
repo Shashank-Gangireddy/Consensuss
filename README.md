@@ -42,22 +42,14 @@ comments forces "Insufficient Evidence") — both borrowed from how Reddit
 
 ## Setup
 
-1. Go to `chrome://extensions` (or `brave://extensions`).
-2. Enable **Developer mode** (top right).
-3. Click **Load unpacked** and select this repo's folder.
-4. Click the extension icon → gear icon → enter your API key for
-   OpenAI, Anthropic, or Gemini (only one provider is needed). Save.
-5. Open any YouTube video and click **Rate this claim**.
-
-If you'd rather skip the manual steps, install the packaged version from
-the [Chrome Web Store](https://consensuss.lol) instead.
+Install the packaged version from the [Chrome Web Store](https://consensuss.lol).
 
 ## Privacy & security
 
 - **No backend.** Nothing is sent to a server the developer runs; your
   API key and requests go straight from your browser to
   OpenAI/Anthropic/Gemini.
-- API keys are stored in `chrome.storage.local` (this browser only, not
+- API keys are stored in `chrome.storage.local` (respective browser only, not
   synced).
 - Reddit cross-check requests are sent with `credentials: 'include'`,
   which means they carry whatever `reddit.com` session cookie already
@@ -71,30 +63,6 @@ the [Chrome Web Store](https://consensuss.lol) instead.
   global rate limit against runaway paid LLM calls, and explicit
   `content_security_policy`. Full detail on the
   [public Security page](https://consensuss.lol/security/).
-
-## Repo layout
-
-| File | Purpose |
-|---|---|
-| `manifest.json` | Extension manifest (permissions, CSP, entry points) |
-| `content.js` / `page-bridge.js` | Runs on YouTube pages: finds the title, scrapes comments, injects the badge |
-| `background.js` | Service worker: calls the LLM provider and Reddit, rate limiting |
-| `popup.html/js/css` | Toolbar popup UI |
-| `dashboard.html/js/css` | Full analysis history, CSV export, Learned Guidance management |
-| `options.html/js/css` | API key / provider settings |
-| `guidance-seed.json` | Optional baseline "Learned Guidance" rules bundled into fresh installs |
-| `build.sh` | Builds a versioned, store-ready `.zip` from `manifest.json`'s version |
-| `CHANGELOG.md` | Version history |
-
-## Building a release zip
-
-```bash
-./build.sh
-```
-
-Reads the version from `manifest.json`, refuses to overwrite an existing
-zip, and produces `consensus-extension-<version>.zip` ready for upload to
-the Chrome Web Store Developer Dashboard.
 
 ## Carrying Learned Guidance to another device
 

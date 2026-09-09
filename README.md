@@ -46,6 +46,14 @@ Install the packaged version from the
 
 Full detail on the
   [public Security page](https://consensuss.lol/security/).
+
+Every check on that page is backed by an actual test in `test/security/`,
+not just a claim. Clone the repo and run it yourself:
+
+```
+npm install --no-save jsdom
+npm test
+```
   
 
 ## Carrying Learned Guidance to another device

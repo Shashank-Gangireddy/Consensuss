@@ -8,7 +8,8 @@ This extension reads the comments so you don't have to sit through 12 minutes to
 
 **Live on the Chrome Web Store. Install from the official site** · [consensuss.lol](https://consensuss.lol)
 
-<img src="docs/screenshots/guidance-enforcement.jpg" width="360" alt="Popup showing a 5/10 Mixed rating on a claim, with a code-side guidance-enforcement notice explaining the rating was auto-adjusted from 6 to 5 because a learned guidance rule was detected as relevant but not reflected in the model's own score" />
+<img src="docs/screenshots/guidance-enforcement.jpg" width="360" alt="Popup showing a 5/10 rating that got knocked down from 6 because a learned guidance rule wasn't actually reflected in the model's score" />
+
 
 
 ## How it works

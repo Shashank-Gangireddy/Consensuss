@@ -8,8 +8,6 @@ This extension reads the comments so you don't have to sit through 12 minutes to
 
 **Live on the Chrome Web Store** · [consensuss.lol](https://consensuss.lol)
 
-## Screenshots
-
 <img src="docs/screenshots/guidance-enforcement.jpg" width="360" alt="Popup showing a 5/10 Mixed rating on a claim, with a code-side guidance-enforcement notice explaining the rating was auto-adjusted from 6 to 5 because a learned guidance rule was detected as relevant but not reflected in the model's own score" />
 
 Rating card for a Review-format video, showing the guidance-enforcement
@@ -17,6 +15,7 @@ check in action: the model returned a 6, but a learned rule about
 missing source attribution applied here and the model didn't actually
 adjust for it — so the code-side check caught that and forced the
 rating down to 5, with the reasoning shown rather than silently applied.
+
 
 ## How it works
 
@@ -41,15 +40,18 @@ comments forces "Insufficient Evidence") — both borrowed from how Reddit
 (Wilson score confidence, Controversial-sort polarization) and Steam
 (review-count gating) handle consensus at scale.
 
+
 ## Setup
 
 Install the packaged version from the
   [Chrome Web Store](https://consensuss.lol).
+  
 
 ## Privacy & security
 
 Full detail on the
   [public Security page](https://consensuss.lol/security/).
+  
 
 ## Carrying Learned Guidance to another device
 
@@ -65,6 +67,7 @@ default:
   exported guidance JSON before loading the extension to give every
   fresh install that baseline applied once, only if that device's
   guidance store is empty.
+  
 
 ## Limitations to note
 
@@ -76,6 +79,7 @@ default:
 - YouTube's DOM structure changes periodically; if the badge or comment
   scraping stops working, check the selectors in `content.js`
   (`getTitle`, `findTitleAnchor`, `scrapeVisibleComments`) first.
+  
 
 ## Links
 

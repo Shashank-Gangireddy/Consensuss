@@ -544,14 +544,34 @@ function selectTopComments(rawComments, limit = 60) {
   return { selected: clustered.slice(0, limit), totalFetched };
 }
 
-function extractJson(text) {
-  if (!text) throw new Error('Empty model response');
+// `label` identifies the calling provider (e.g. "Anthropic") purely for the
+// error message. On failure we always include a snippet of what the model
+// actually sent — the previous bare "No JSON object found in model
+// response" / raw JSON.parse SyntaxError gave no way to tell, from the
+// error alone, whether the model refused in plain prose, got cut off
+// mid-object, or returned malformed JSON. The snippet makes that visible
+// straight from the popup's error banner / console, without needing to add
+// console.log calls and reproduce the failure.
+function extractJson(text, label = 'model') {
+  if (!text) throw new Error(`Empty ${label} response`);
   let cleaned = text.trim();
   cleaned = cleaned.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
   const start = cleaned.indexOf('{');
   const end = cleaned.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('No JSON object found in model response');
-  return JSON.parse(cleaned.slice(start, end + 1));
+  const snippet = cleaned.length > 300 ? cleaned.slice(0, 300) + '…' : cleaned;
+  if (start === -1 || end === -1) {
+    throw new Error(`No JSON object found in ${label} response. Raw response: ${JSON.stringify(snippet)}`);
+  }
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch (e) {
+    // Most common cause: max_tokens cut the response off mid-object (valid
+    // '{' start, no valid matching '}' before the cutoff, so lastIndexOf
+    // grabs a '}' that belongs to a nested field, not the outer object) —
+    // surface that JSON.parse error plus the raw snippet instead of a
+    // generic SyntaxError with no context on what was actually received.
+    throw new Error(`Malformed JSON in ${label} response (${e.message}). Raw response: ${JSON.stringify(snippet)}`);
+  }
 }
 
 async function callOpenAI({ apiKey, model }, system, user) {
@@ -573,7 +593,20 @@ async function callOpenAI({ apiKey, model }, system, user) {
   });
   if (!res.ok) throw new Error(`OpenAI API error ${res.status}: ${await res.text()}`);
   const data = await res.json();
-  const result = extractJson(data.choices?.[0]?.message?.content);
+  const choice = data.choices?.[0];
+  // finish_reason 'length' means max_tokens cut the response off mid-JSON —
+  // that's a different, actionable problem ("raise max_tokens" / pick a
+  // less verbose model) from a generic parse failure, so call it out
+  // before extractJson turns it into an opaque "no JSON found"/malformed
+  // error. 'content_filter' is OpenAI's moderation block, also worth
+  // naming explicitly rather than leaving the user to guess.
+  if (choice?.finish_reason === 'length') {
+    throw new Error('OpenAI response was cut off before completing (finish_reason="length") — the model ran out of tokens mid-answer. Try again or pick a less verbose model.');
+  }
+  if (choice?.finish_reason === 'content_filter') {
+    throw new Error('OpenAI blocked this response (finish_reason="content_filter") — likely flagged by moderation on the comment content.');
+  }
+  const result = extractJson(choice?.message?.content, 'OpenAI');
   const usage = {
     promptTokens: data.usage?.prompt_tokens || 0,
     completionTokens: data.usage?.completion_tokens || 0,
@@ -593,7 +626,16 @@ async function callAnthropic({ apiKey, model }, system, user) {
     },
     body: JSON.stringify({
       model,
-      max_tokens: 1024,
+      // Was 1024 — too tight for the full rating+reasoning JSON object from
+      // newer/more verbose Claude models, which could cut the response off
+      // mid-object (stop_reason: 'max_tokens') before the closing '}'. That
+      // produced either an empty-text error (caught below) or, worse, a
+      // non-empty but truncated JSON string that extractJson couldn't
+      // parse and reported as a bare "No JSON object found" with no hint
+      // it was a token-budget problem. Raised to give headroom; the
+      // stop_reason==='max_tokens' check below still catches it explicitly
+      // if a response is ever long enough to hit even this ceiling.
+      max_tokens: 4096,
       system,
       messages: [{ role: 'user', content: user }]
     })
@@ -620,7 +662,16 @@ async function callAnthropic({ apiKey, model }, system, user) {
         : 'Raw response: ' + JSON.stringify(data).slice(0, 500))
     );
   }
-  const result = extractJson(text);
+  // text IS present but may still have been cut off mid-JSON-object if
+  // stop_reason is 'max_tokens' (the model started the text block, ran out
+  // of budget partway through it). Catching this explicitly, before
+  // extractJson, turns what used to surface as a confusing "No JSON object
+  // found"/malformed-JSON error into a clear, actionable one.
+  if (data.stop_reason === 'max_tokens') {
+    const snippet = text.length > 300 ? text.slice(0, 300) + '…' : text;
+    throw new Error(`Anthropic response was cut off before completing (stop_reason="max_tokens") — the model ran out of tokens mid-answer. Raw partial response: ${JSON.stringify(snippet)}`);
+  }
+  const result = extractJson(text, 'Anthropic');
   const usage = {
     promptTokens: data.usage?.input_tokens || 0,
     completionTokens: data.usage?.output_tokens || 0,
@@ -650,8 +701,21 @@ async function callGemini({ apiKey, model }, system, user) {
   );
   if (!res.ok) throw new Error(`Gemini API error ${res.status}: ${await res.text()}`);
   const data = await res.json();
-  const text = data.candidates?.[0]?.content?.parts?.map(p => p.text).join('\n');
-  const result = extractJson(text);
+  // A safety/prompt block leaves candidates empty entirely (promptFeedback
+  // .blockReason set instead), and a token-budget cutoff sets
+  // finishReason: 'MAX_TOKENS' on the (possibly text-less or truncated)
+  // candidate. Both used to fall straight through to extractJson and
+  // surface as an opaque "No JSON object found" — name them explicitly.
+  if (data.promptFeedback?.blockReason) {
+    throw new Error(`Gemini blocked this request (blockReason="${data.promptFeedback.blockReason}") — likely flagged by safety filtering on the comment content.`);
+  }
+  const candidate = data.candidates?.[0];
+  const text = candidate?.content?.parts?.map(p => p.text).join('\n');
+  if (candidate?.finishReason === 'MAX_TOKENS') {
+    const snippet = text && text.length > 300 ? text.slice(0, 300) + '…' : (text || '(none)');
+    throw new Error(`Gemini response was cut off before completing (finishReason="MAX_TOKENS") — the model ran out of tokens mid-answer. Raw partial response: ${JSON.stringify(snippet)}`);
+  }
+  const result = extractJson(text, 'Gemini');
   const usage = {
     promptTokens: data.usageMetadata?.promptTokenCount || 0,
     completionTokens: data.usageMetadata?.candidatesTokenCount || 0,

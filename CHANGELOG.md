@@ -4,6 +4,28 @@ All notable changes to the Consensus extension are logged here. Bump the
 version in `manifest.json` alongside every entry — the Chrome Web Store
 rejects a re-upload with an unchanged version number.
 
+## [3.8.1] - 2026-09-09
+- **Fixed a "No JSON object found in model response" error** that could
+  fire even on a healthy 200 response, with no clue why. Root cause: the
+  Anthropic call used a hardcoded `max_tokens: 1024`, which some
+  models/responses exceed — the response gets cut off mid-JSON-object
+  before the closing `}`, and the old `extractJson()` just reported "no
+  JSON object found" (or a bare `SyntaxError` if a stray `}` from a nested
+  field happened to be present) with no indication it was a token-budget
+  problem, and no visibility into what the model actually sent.
+  - Raised Anthropic's `max_tokens` from 1024 to 4096.
+  - All three providers (OpenAI `finish_reason`, Anthropic `stop_reason`,
+    Gemini `finishReason`) are now checked for a `MAX_TOKENS`/`length`
+    cutoff *before* attempting to parse, and raise a specific "response
+    was cut off" error instead of falling through to a generic JSON error.
+  - OpenAI/Gemini content-filter and safety-block cases are now also
+    named explicitly instead of falling through to the same generic path.
+  - `extractJson()` now always includes a snippet of the actual raw model
+    output in its error message (previously logged nothing), and
+    distinguishes "no `{`/`}` found at all" from "found braces but
+    `JSON.parse` still failed" (most likely truncation mid-object).
+- No new permissions, host_permissions, or CSP changes — logic-only.
+
 ## [3.8.0] - 2026-09-09
 - **Removed hardcoded default models.** Previously, leaving the Model field
   blank in Options silently fell back to a per-provider default

@@ -6,7 +6,7 @@ Rates whether a YouTube video title's claimed outcome holds up, based on viewer 
 
 This extension reads the comments so you don't have to sit through 12 minutes to find out that you dont agree with the video. It srapes the comments from DOM, runs it against a set of no-nonsense rules, and arrives at a score that tells you straight up if this is worth your time, or skip it.
 
-**Live on the Chrome Web Store** · [consensuss.lol](https://consensuss.lol)
+**Live on the Chrome Web Store. Install from the official site** · [consensuss.lol](https://consensuss.lol)
 
 <img src="docs/screenshots/guidance-enforcement.jpg" width="360" alt="Popup showing a 5/10 Mixed rating on a claim, with a code-side guidance-enforcement notice explaining the rating was auto-adjusted from 6 to 5 because a learned guidance rule was detected as relevant but not reflected in the model's own score" />
 
@@ -38,7 +38,7 @@ comments forces "Insufficient Evidence") — both borrowed from how Reddit
 ## Setup
 
 Install the packaged version from the
-  [Chrome Web Store](https://consensuss.lol).
+  [Chrome Web Store](https://chromewebstore.google.com/detail/objmiejnkplkblidmamkfinfpkmnkjnb?utm_source=item-share-cb).
   
 
 ## Privacy & security

@@ -117,6 +117,12 @@ function renderConsensusResult(state) {
   $('verdict').textContent = r.verdict;
   $('summary').textContent = r.summary;
 
+  if (r.contested) {
+    $('contestedBadge').classList.remove('hidden');
+  } else {
+    $('contestedBadge').classList.add('hidden');
+  }
+
   if (r.critical_flag && r.critical_flag.corroboration) {
     const strong = r.critical_flag.corroboration === 'Strong';
     $('criticalFlagBox').classList.remove('hidden');

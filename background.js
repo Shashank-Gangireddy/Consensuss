@@ -658,13 +658,22 @@ async function fetchJsonWithTimeout(url, opts = {}, timeoutMs = REDDIT_FETCH_TIM
   try {
     const res = await fetch(url, {
       // NOTE: must be 'include', not 'omit'. Reddit's public JSON
-      // endpoints 403 without the anonymous session cookie Reddit sets on
-      // first contact (confirmed by direct A/B test: omit -> 403, include
-      // -> 200, same URL, same origin) — its bot-defense layer apparently
-      // treats a cookieless request as suspicious even though the data
-      // itself requires no login. Set explicitly rather than relying on
-      // fetch's default, since default credentials behavior can differ
-      // between a page context and an extension service worker context.
+      // endpoints 403 without a reddit.com cookie present (confirmed by
+      // direct A/B test: omit -> 403, include -> 200, same URL, same
+      // origin) — its bot-defense layer treats a cookieless request as
+      // suspicious even though the data itself requires no login.
+      // IMPORTANT — this is NOT necessarily an anonymous cookie: 'include'
+      // sends WHATEVER reddit.com cookies exist in this Chrome profile. If
+      // the user is logged into Reddit in this browser, these requests go
+      // out over their real, authenticated session — Reddit's server sees
+      // them as that account's activity, same as any reddit.com tab. No
+      // login prompt is ever shown and no credential is read/stored by
+      // this extension, but this is disclosed on the Privacy/FAQ pages
+      // specifically because "no account needed" doesn't mean "never
+      // attributed to your account" when one is already logged in. Set
+      // explicitly rather than relying on fetch's default, since default
+      // credentials behavior can differ between a page context and an
+      // extension service worker context.
       credentials: 'include',
       ...opts,
       signal: controller.signal

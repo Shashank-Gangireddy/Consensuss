@@ -23,7 +23,12 @@ zip -r "$OUT" . \
   -x "*.zip" \
   -x "build.sh" \
   -x "README.md" \
-  -x "CHANGELOG.md"
+  -x "CHANGELOG.md" \
+  -x "package.json" \
+  -x "package-lock.json" \
+  -x "node_modules/*" \
+  -x "test/*" \
+  -x "docs/*"
 
 echo ""
 echo "Built $OUT"

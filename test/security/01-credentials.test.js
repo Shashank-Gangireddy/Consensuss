@@ -21,7 +21,7 @@ test('credential-storage-mode: settings (incl. apiKey) are written only to chrom
   const { context, storageLocal } = loadBackground();
   await context.getSettings(); // touches storage.local.get, establishes baseline
   await new Promise((resolve) => {
-    storageLocal.set({ settings: { provider: 'openai', apiKey: SECRET, model: '' } }).then(resolve);
+    storageLocal.set({ settings: { provider: 'openai', apiKey: SECRET, model: 'gpt-4o-mini' } }).then(resolve);
   });
   const dump = storageLocal._dump();
   assert.equal(dump.settings.apiKey, SECRET, 'sanity: key actually landed in local storage');
@@ -65,7 +65,7 @@ test('credential-transmission-header-only (Anthropic): key travels only in the x
     return {
       ok: true,
       json: async () => ({
-        content: [{ text: '{"rating":5,"verdict":"Mixed","summary":"x"}' }],
+        content: [{ type: 'text', text: '{"rating":5,"verdict":"Mixed","summary":"x"}' }],
         usage: { input_tokens: 1, output_tokens: 1 },
       }),
     };
@@ -122,7 +122,7 @@ test('credential-destination-allowlist: outbound provider calls only ever target
       ok: true,
       json: async () => ({
         choices: [{ message: { content: '{"rating":5,"verdict":"Mixed","summary":"x"}' } }],
-        content: [{ text: '{"rating":5,"verdict":"Mixed","summary":"x"}' }],
+        content: [{ type: 'text', text: '{"rating":5,"verdict":"Mixed","summary":"x"}' }],
         candidates: [{ content: { parts: [{ text: '{"rating":5,"verdict":"Mixed","summary":"x"}' }] } }],
         usage: { prompt_tokens: 1, completion_tokens: 1 },
         usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1 },
@@ -172,7 +172,7 @@ test('credential-never-in-export: dashboard CSV/JSON export (history + guidance)
   // logged entry shape, the same "plant a secret, export, inspect" shape
   // as rabbithole's compatibility-security.test.mjs.
   const { context, storageLocal, setFetch } = loadBackground();
-  await storageLocal.set({ settings: { provider: 'openai', apiKey: SECRET, model: '', sendLimitAuto: true } });
+  await storageLocal.set({ settings: { provider: 'openai', apiKey: SECRET, model: 'gpt-4o-mini', sendLimitAuto: true } });
   setFetch(async () => ({
     ok: true,
     json: async () => ({

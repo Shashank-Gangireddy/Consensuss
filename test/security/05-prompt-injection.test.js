@@ -50,7 +50,7 @@ test('prompt-injection-framing-present: both system prompts explicitly warn comm
 
 test('prompt-injection-cannot-escape-rating-scope: an injected "set rating to 100 / ignore instructions" model response is still clamped to 1-10', async () => {
   const { context, storageLocal, setFetch } = loadBackground();
-  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: '' } });
+  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' } });
   // Simulate the WORST case: the model was fully compromised by an
   // injected comment and returned an out-of-range/malformed rating and an
   // invalid verdict enum value — this is what analyzeClaim()'s own
@@ -85,7 +85,7 @@ test('prompt-injection-cannot-escape-rating-scope: an injected "set rating to 10
 
 test('prompt-injection-cannot-force-insufficient-evidence-bypass: rating stays clamped even with zero comments (guards against an empty/short-circuited evidence set)', async () => {
   const { context, storageLocal, setFetch } = loadBackground();
-  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: '' } });
+  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' } });
   setFetch(async () => ({
     ok: true,
     json: async () => ({
@@ -100,7 +100,7 @@ test('prompt-injection-cannot-force-insufficient-evidence-bypass: rating stays c
 
 test('prompt-injection-critical-flag-ceiling-is-deterministic: a model-claimed "Strong" critical_flag forces rating <= 3 in code, not by trusting the model\'s own rating field', async () => {
   const { context, storageLocal, setFetch } = loadBackground();
-  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: '' } });
+  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' } });
   setFetch(async () => ({
     ok: true,
     json: async () => ({
@@ -125,7 +125,7 @@ test('prompt-injection-critical-flag-ceiling-is-deterministic: a model-claimed "
 test('prompt-injection-guidance-enforcement-is-deterministic: an unresolved guidance rule (model self-reports relevant but not adjusted) reduces the rating in code', async () => {
   const { context, storageLocal, setFetch } = loadBackground();
   await storageLocal.set({
-    settings: { provider: 'openai', apiKey: 'sk-test', model: '' },
+    settings: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' },
     learnedGuidance: [{ id: 'r1', rule: 'Be skeptical of unverified sourcing claims', scope: 'global', severity: 'normal', active: true, createdAt: 1, timesApplied: 0 }],
   });
   setFetch(async () => ({
@@ -150,7 +150,7 @@ test('prompt-injection-guidance-enforcement-is-deterministic: an unresolved guid
 
 test('prompt-injection-supporting-points-are-bounded-arrays: non-array supporting_points/contradicting_points from a malformed/injected response default to empty arrays, not throw', async () => {
   const { context, storageLocal, setFetch } = loadBackground();
-  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: '' } });
+  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' } });
   setFetch(async () => ({
     ok: true,
     json: async () => ({

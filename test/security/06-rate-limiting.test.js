@@ -60,7 +60,7 @@ test('rate-limit-reddit-cooldown: reddit validation has its own independent cool
 
 test('rate-limit-analyze-claim-end-to-end: two rapid ANALYZE_CLAIM messages for the same video — the second is rejected via the real message listener path', async () => {
   const { messageListeners, storageLocal } = loadBackground({ extensionId: 'realextensionid00000000000000000' });
-  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: '' } });
+  await storageLocal.set({ settings: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' } });
   const msg = { type: 'ANALYZE_CLAIM', payload: { title: 'x', videoId: 'endtoendvi1', comments: [] } };
   const first = await new Promise((resolve) => messageListeners[0](msg, { id: 'realextensionid00000000000000000' }, resolve));
   // First call will fail for its OWN reason (comments array empty -> some

@@ -4,6 +4,37 @@ All notable changes to the Consensus extension are logged here. Bump the
 version in `manifest.json` alongside every entry — the Chrome Web Store
 rejects a re-upload with an unchanged version number.
 
+## [3.8.2] - 2026-09-12
+- **Fixed ordinary "Learned Guidance" rules incorrectly tanking ratings on
+  unrelated videos**, sometimes collapsing them all the way to
+  "Insufficient Evidence" despite well above the minimum-comment floor.
+  Root cause: every active guidance rule (up to 25 most recent) was
+  injected into the prompt as "binding" for EVERY analysis, regardless of
+  whether the rule's `scope` (e.g. "Comparison", "Tutorial/Howto")
+  actually matched the video being rated — a rule learned from one
+  Advice/Opinion video's correction could get force-applied to a
+  completely unrelated Tutorial or Product Review, plus a code-side
+  penalty for any "unresolved" rule the model didn't apply on top.
+  - **Ordinary (non-critical) guidance rules are no longer shown to the
+    model before it rates a video.** The model now judges purely from
+    the video's title/category/tags and the comment evidence, using the
+    existing weighted-evidence rules already in the system prompt
+    (breadth-over-intensity, near-duplicate clustering, evidence-volume
+    tiering, minimum-sample floor).
+  - **Guidance is now matched deterministically AFTER the model
+    responds**, against its already-formed result: a rule only applies
+    if its `scope` fits the model's own classified `video_format`
+    (or is `global`) AND its wording substantively overlaps what the
+    model actually wrote in its summary/contradicting points. Only a
+    genuine match applies a rating penalty.
+  - **CRITICAL (creator-genuineness) guidance is unchanged** — still
+    shown to the model up front, since it benefits from the model
+    actively watching for a specific red flag (staged content, bought
+    engagement) while forming its judgment.
+  - Removed the `guidance_impact` self-report schema field (the model no
+    longer sees ordinary guidance, so it has nothing to self-report on).
+- No new permissions, host_permissions, or CSP changes — logic-only.
+
 ## [3.8.1] - 2026-09-09
 - **Fixed a "No JSON object found in model response" error** that could
   fire even on a healthy 200 response, with no clue why. Root cause: the

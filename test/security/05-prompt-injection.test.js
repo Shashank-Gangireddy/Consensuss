@@ -122,11 +122,42 @@ test('prompt-injection-critical-flag-ceiling-is-deterministic: a model-claimed "
   assert.ok(result.rating <= 3, `code-side ceiling must force rating<=3 on Strong critical_flag even when the model returned rating=9, got ${result.rating}`);
 });
 
-test('prompt-injection-guidance-enforcement-is-deterministic: an unresolved guidance rule (model self-reports relevant but not adjusted) reduces the rating in code', async () => {
+test('prompt-injection-guidance-enforcement-is-deterministic: a stored ordinary guidance rule whose scope fits and whose wording overlaps the model\'s own summary reduces the rating in code, without ever being shown to the model', async () => {
   const { context, storageLocal, setFetch } = loadBackground();
   await storageLocal.set({
     settings: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' },
     learnedGuidance: [{ id: 'r1', rule: 'Be skeptical of unverified sourcing claims', scope: 'global', severity: 'normal', active: true, createdAt: 1, timesApplied: 0 }],
+  });
+  let capturedPrompt = '';
+  setFetch(async (url, opts) => {
+    capturedPrompt = JSON.parse(opts.body).messages.map(m => m.content).join('\n');
+    return {
+      ok: true,
+      json: async () => ({
+        choices: [{
+          message: {
+            content: JSON.stringify({
+              rating: 8, verdict: 'Confirmed', video_format: 'Review',
+              summary: 'Comments broadly agree, though several flag unverified sourcing claims as a concern.',
+            }),
+          },
+        }],
+        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+      }),
+    };
+  });
+  const comments = DISTINCT_COMMENTS;
+  const result = await context.analyzeClaim('Some Video', comments, { videoId: 'abcdefghijk' });
+  assert.doesNotMatch(capturedPrompt, /Be skeptical of unverified sourcing claims/, 'ordinary guidance must NOT be shown to the model before it forms a judgment (only critical guidance is injected up front)');
+  assert.ok(result.rating < 8, `a rule that matches the model's own finished result (scope fits + wording overlaps) must reduce the rating below the model's raw 8, got ${result.rating}`);
+  assert.ok(result.guidance_enforcement, 'guidance_enforcement must be recorded so the UI surfaces the auto-adjustment, not silently applied');
+});
+
+test('prompt-injection-guidance-enforcement-scope-gated: a stored guidance rule scoped to a DIFFERENT video_format never fires, even with wording overlap', async () => {
+  const { context, storageLocal, setFetch } = loadBackground();
+  await storageLocal.set({
+    settings: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' },
+    learnedGuidance: [{ id: 'r1', rule: 'Be skeptical of unverified sourcing claims', scope: 'Comparison', severity: 'normal', active: true, createdAt: 1, timesApplied: 0 }],
   });
   setFetch(async () => ({
     ok: true,
@@ -134,8 +165,8 @@ test('prompt-injection-guidance-enforcement-is-deterministic: an unresolved guid
       choices: [{
         message: {
           content: JSON.stringify({
-            rating: 8, verdict: 'Confirmed', summary: 'x',
-            guidance_impact: [{ rule: 'Be skeptical of unverified sourcing claims', relevant: true, rating_was_adjusted: false }],
+            rating: 8, verdict: 'Confirmed', video_format: 'Review', // NOT "Comparison" — scope mismatch
+            summary: 'Comments broadly agree, though several flag unverified sourcing claims as a concern.',
           }),
         },
       }],
@@ -144,8 +175,8 @@ test('prompt-injection-guidance-enforcement-is-deterministic: an unresolved guid
   }));
   const comments = DISTINCT_COMMENTS;
   const result = await context.analyzeClaim('Some Video', comments, { videoId: 'abcdefghijk' });
-  assert.ok(result.rating < 8, `an admitted-but-unresolved guidance rule must reduce the rating below the model's raw 8, got ${result.rating}`);
-  assert.ok(result.guidance_enforcement, 'guidance_enforcement must be recorded so the UI surfaces the auto-adjustment, not silently applied');
+  assert.equal(result.rating, 8, `a rule scoped to a different video_format must not fire, rating should stay the model's raw 8, got ${result.rating}`);
+  assert.equal(result.guidance_enforcement, null, 'guidance_enforcement must be null when no rule matches');
 });
 
 test('prompt-injection-supporting-points-are-bounded-arrays: non-array supporting_points/contradicting_points from a malformed/injected response default to empty arrays, not throw', async () => {

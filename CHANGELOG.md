@@ -4,6 +4,34 @@ All notable changes to the Consensus extension are logged here. Bump the
 version in `manifest.json` alongside every entry — the Chrome Web Store
 rejects a re-upload with an unchanged version number.
 
+## [3.8.3] - 2026-09-12
+- **Popup UI cleanup: consistent spacing and clearer top-to-bottom
+  information flow**, reviewed and iterated as a design mockup
+  (`design-mockup/popup-clean-scroll.html`) before landing in
+  `popup.html`/`popup.css`. No behavior/logic changes — HTML ids and
+  popup.js are untouched.
+  - Rating hero (score/verdict) now always leads the result — previously
+    the critical-flag and guidance-enforcement boxes could render above
+    it, burying the anchor everything else refers back to.
+  - Added a single "category · judged-on" eyebrow line directly under
+    the hero (dim gray, quiet metadata) instead of two separate tag
+    lines in different spots.
+  - The "Disputed" badge no longer fights the giant rating number for
+    the same baseline — it now stacks under the verdict, right-aligned,
+    and its text is legible (fixed a pre-existing contrast bug where
+    `--amber-text` made the badge's own text nearly invisible against
+    its background).
+  - Critical-flag, guidance-enforcement, recommendation, and Reddit
+    boxes now share one box shape (radius/padding/label style), and the
+    guidance-enforcement list's text now aligns flush with the
+    critical-flag box's paragraph above it (previously bulleted/indented
+    differently).
+  - One spacing scale (4/8/12/16px) replaces the prior ad-hoc mix of
+    4/6/8/10/12/14px margins across the popup.
+  - Token-usage footnote is now pinned to the very bottom of the result
+    as a footer, instead of appearing mid-scroll between content blocks.
+- No new permissions, host_permissions, or CSP changes — CSS/HTML only.
+
 ## [3.8.2] - 2026-09-12
 - **Fixed ordinary "Learned Guidance" rules incorrectly tanking ratings on
   unrelated videos**, sometimes collapsing them all the way to

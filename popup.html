@@ -28,52 +28,60 @@
 
     <div id="resultBox" class="hidden">
       <p id="cacheLine" class="muted hidden"></p>
-      <div id="criticalFlagBox" class="hidden critical-flag-box">
-        <h3 id="criticalFlagLabel" class="critical-flag-label"></h3>
-        <p id="criticalFlagNote"></p>
+
+      <div class="rating-line" id="ratingHero">
+        <span class="rating-num-group"><span id="ratingNum" class="rating-num"></span><span class="rating-frac">/10</span></span>
+        <span class="verdict-group">
+          <span id="verdict" class="verdict"></span>
+          <span id="contestedBadge" class="contested-badge hidden" title="Supporting and contradicting comments are both substantial — this is actively disputed, not just thin/mixed evidence">Disputed</span>
+        </span>
       </div>
-      <div id="guidanceEnforcementBox" class="hidden guidance-enforcement-box">
-        <h3 id="guidanceEnforcementLabel" class="guidance-enforcement-label"></h3>
+
+      <div class="meta-eyebrow">
+        <span id="classificationLine" class="hidden"></span>
+        <span id="ratingDimLine" class="hidden"></span>
+      </div>
+
+      <div id="criticalFlagBox" class="hidden box critical-flag-box">
+        <h3 id="criticalFlagLabel" class="box-label critical-flag-label"></h3>
+        <p id="criticalFlagNote" class="box-body"></p>
+      </div>
+      <div id="guidanceEnforcementBox" class="hidden box guidance-enforcement-box">
+        <h3 id="guidanceEnforcementLabel" class="box-label guidance-enforcement-label"></h3>
         <ul id="guidanceEnforcementList" class="guidance-enforcement-list"></ul>
       </div>
-      <div class="rating-line" id="ratingHero">
-        <span id="ratingNum" class="rating-num"></span><span class="rating-frac">/10</span>
-        <span id="verdict" class="verdict"></span>
-        <span id="contestedBadge" class="contested-badge hidden" title="Supporting and contradicting comments are both substantial — this is actively disputed, not just thin/mixed evidence">Disputed</span>
-      </div>
-      <p id="classificationLine" class="tag-line hidden"></p>
-      <p id="ratingDimLine" class="dim-line hidden"></p>
+
       <p id="summary"></p>
 
-      <div id="recommendationBox" class="hidden">
-        <h3 id="recommendationLabel">Crowd Recommendation</h3>
-        <p id="recommendationText" class="recommendation-text"></p>
+      <div id="recommendationBox" class="hidden box recommendation-box">
+        <h3 id="recommendationLabel" class="box-label">Crowd Recommendation</h3>
+        <p id="recommendationText" class="box-body recommendation-text"></p>
       </div>
 
-      <p id="usageLine" class="muted"></p>
+      <div id="supportBlock" class="hidden list-block">
+        <h3 id="supportLabel" class="section-heading">Supporting comments say</h3>
+        <ul id="supportList" class="plain-list"></ul>
+      </div>
+      <div id="contraBlock" class="hidden list-block">
+        <h3 id="contraLabel" class="section-heading">Contradicting comments say</h3>
+        <ul id="contraList" class="plain-list"></ul>
+      </div>
 
       <button id="redditBtn" class="secondary-cta hidden">Check against Reddit</button>
       <div id="redditStatus" class="muted"></div>
 
-      <div id="redditBox" class="hidden">
-        <h3 id="redditVerdictLabel" class="reddit-verdict-label"></h3>
-        <p id="redditSummary"></p>
-        <div id="redditRecBox" class="hidden">
-          <h3>Reddit's own pick</h3>
-          <p id="redditRecText" class="recommendation-text"></p>
+      <div id="redditBox" class="hidden box reddit-box">
+        <h3 id="redditVerdictLabel" class="box-label reddit-verdict-label"></h3>
+        <p id="redditSummary" class="box-body"></p>
+        <div id="redditRecBox" class="hidden reddit-rec-box">
+          <h3 class="box-label">Reddit's own pick</h3>
+          <p id="redditRecText" class="box-body recommendation-text"></p>
         </div>
         <ul id="redditCitations" class="citation-list"></ul>
         <p id="redditUsageLine" class="muted"></p>
       </div>
 
-      <div id="supportBlock" class="hidden">
-        <h3 id="supportLabel">Supporting comments say</h3>
-        <ul id="supportList"></ul>
-      </div>
-      <div id="contraBlock" class="hidden">
-        <h3 id="contraLabel">Contradicting comments say</h3>
-        <ul id="contraList"></ul>
-      </div>
+      <p id="usageLine" class="muted usage-line"></p>
     </div>
 
     <div id="vibesBox" class="hidden">

@@ -48,6 +48,15 @@ h1 {
   display: none !important;
 }
 
+/* Shared spacing scale — every block-to-block gap below is one of these
+   five values instead of the previous ad-hoc 4/6/8/10/12/14px mix. */
+:root {
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+}
+
 .video-title {
   font-family: var(--font-display);
   font-weight: 800;
@@ -112,14 +121,20 @@ button:disabled {
    (recommendation box, reddit CTA, guidance notes all read differently
    depending on this number/verdict), so it's sized like a headline and
    colored by state (1-3 red / 4-6 amber / 7-10 mint) rather than being
-   just another line of text. */
+   just another line of text. It's also always the FIRST thing in the
+   result now — nothing (flags, guidance notes) sits above it. */
 .rating-line {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   border-radius: var(--radius-lg);
   padding: 16px 18px;
-  margin-bottom: 12px;
+  margin-bottom: var(--sp-2);
+}
+
+.rating-num-group {
+  display: flex;
+  align-items: baseline;
 }
 
 .rating-num {
@@ -138,22 +153,65 @@ button:disabled {
   margin-left: -6px;
 }
 
+/* Verdict + Disputed badge stack on the right instead of sharing the
+   number's baseline — the badge is a qualifier ON the verdict, so it
+   sits directly under it, right-aligned. */
+.verdict-group {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
 .verdict {
   font-weight: 800;
   font-size: 14px;
-  margin-left: auto;
+  line-height: 1;
 }
 
 .contested-badge {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
-  background: var(--amber-bg, #4a3c1e);
-  color: var(--amber-text, #ffdfa0);
-  margin-left: 6px;
+  background: #4a3c1e;
+  color: #ffdfa0;
+}
+
+/* Eyebrow line right under the hero: category/format + judged-on, kept
+   tight to the score since they're read as one unit ("what was scored
+   and how"). Dim gray — quiet metadata, not a heading. */
+.meta-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0 0 var(--sp-4);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.meta-eyebrow:empty {
+  display: none;
+}
+
+/* Collapse the eyebrow entirely (no stray margin/gap) when both
+   classification and judged-on lines are individually hidden by JS. */
+.meta-eyebrow:not(:has(> span:not(.hidden))) {
+  display: none;
+}
+
+/* Middle-dot separator between classification and judged-on, shown only
+   when both are visible (avoids a dangling dot when one is hidden). */
+.meta-eyebrow #classificationLine:not(.hidden) ~ #ratingDimLine:not(.hidden)::before {
+  content: "\00b7";
+  margin-right: 6px;
+  opacity: 0.6;
 }
 
 .tag-line {
@@ -172,80 +230,87 @@ button:disabled {
   font-style: italic;
 }
 
-.critical-flag-box {
+/* Every "annotation box" (critical flag, guidance enforcement,
+   recommendation, reddit) shares one shape — same radius, padding,
+   label typography, bottom margin. Only the accent color differs per
+   meaning, applied via a second class on the same element. */
+.box {
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  margin: 8px 0 12px;
-  border: 1px solid;
+  padding: 12px 14px;
+  margin-bottom: var(--sp-4);
+  border: 1px solid var(--border);
+  background: var(--card-bg-2);
+}
+
+.box-label {
+  margin: 0 0 var(--sp-2);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-hi);
+}
+
+.box-body {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-mid);
 }
 
 .critical-flag-box.critical-strong {
   background: var(--red-bg);
   border-color: #4a2622;
+}
+.critical-flag-box.critical-strong .box-label,
+.critical-flag-box.critical-strong .box-body {
   color: #ffb9ab;
 }
 
 .critical-flag-box.critical-moderate {
   background: var(--amber-bg);
   border-color: #4a3c1e;
+}
+.critical-flag-box.critical-moderate .box-label,
+.critical-flag-box.critical-moderate .box-body {
   color: #ffdfa0;
 }
 
-.critical-flag-label {
-  margin: 0 0 4px;
-  font-size: 12.5px;
-  font-weight: 800;
-}
-
-#criticalFlagNote {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.4;
-}
-
 .guidance-enforcement-box {
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  margin: 8px 0 12px;
-  border: 1px solid #3a2d52;
+  border-color: #3a2d52;
   background: #1d1730;
 }
 
-.guidance-enforcement-label {
-  margin: 0 0 4px;
-  font-size: 12.5px;
-  font-weight: 800;
+.guidance-enforcement-box .box-label {
   color: #c7a9ff;
 }
 
+/* Same left edge, font-size and line-height as .box-body — no bullets,
+   no indent, so this reads at the same text position/weight as the
+   critical-flag box's plain paragraph right above it. */
 .guidance-enforcement-list {
   margin: 0;
-  padding-left: 16px;
-  font-size: 12px;
+  padding-left: 0;
+  list-style: none;
+  font-size: 12.5px;
+  line-height: 1.5;
   color: var(--text-mid);
 }
 
 .guidance-enforcement-list li {
-  margin-bottom: 3px;
+  margin-bottom: 6px;
 }
 
-#recommendationBox {
-  background: var(--card-bg-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  margin-bottom: 12px;
+.guidance-enforcement-list li:last-child {
+  margin-bottom: 0;
 }
 
-#recommendationBox h3 {
-  margin: 0 0 4px;
+.recommendation-box .box-label {
   color: var(--mint);
 }
 
 .recommendation-text {
-  margin: 0;
   font-weight: 700;
-  font-size: 13px;
   color: var(--text-hi);
 }
 
@@ -263,6 +328,34 @@ h3 {
   color: var(--text-hi);
 }
 
+/* Section headings for plain lists (support/contra) — unified with
+   .box-label typography so a heading reads the same whether it's
+   inside a colored box or sitting directly in the flow. */
+.section-heading {
+  margin: 0 0 var(--sp-2);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-hi);
+}
+
+.list-block {
+  margin-bottom: var(--sp-4);
+}
+
+.plain-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-mid);
+}
+
+.plain-list li {
+  margin-bottom: 6px;
+  line-height: 1.45;
+  font-size: 12.5px;
+}
+
 .secondary-cta {
   width: 100%;
   background: var(--card-bg-2);
@@ -273,7 +366,7 @@ h3 {
   border-radius: 999px;
   cursor: pointer;
   margin-top: 4px;
-  margin-bottom: 8px;
+  margin-bottom: var(--sp-4);
 }
 
 .secondary-cta:disabled {
@@ -281,20 +374,8 @@ h3 {
   cursor: default;
 }
 
-#redditBox {
-  background: var(--card-bg-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  margin-bottom: 12px;
-}
-
-.reddit-verdict-label {
-  margin: 0 0 4px;
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+.reddit-box .box-label {
+  color: var(--mint);
 }
 
 .reddit-verdict-label.rv-good { color: var(--mint); }
@@ -302,14 +383,16 @@ h3 {
 .reddit-verdict-label.rv-bad { color: var(--red); }
 .reddit-verdict-label.rv-none { color: var(--text-dim); }
 
-#redditSummary {
-  margin: 0 0 8px;
-  font-size: 12.5px;
-  color: var(--text-mid);
+.reddit-rec-box {
+  margin-top: var(--sp-3);
+}
+
+.reddit-rec-box .box-label {
+  margin: 0 0 var(--sp-1);
 }
 
 .citation-list {
-  margin: 6px 0 0;
+  margin: var(--sp-2) 0 0;
   padding-left: 16px;
   font-size: 11.5px;
   color: var(--text-mid);
@@ -389,6 +472,20 @@ li {
 }
 
 #summary {
+  margin: 0 0 var(--sp-4);
   color: var(--text-mid);
-  line-height: 1.45;
+  line-height: 1.55;
+  font-size: 13px;
+}
+
+/* Usage/footnote line: deliberately the LAST, quietest thing in the
+   whole scroll — metadata about the analysis itself, not part of the
+   argument, so it now always sits at the very bottom instead of being
+   sprinkled mid-flow between content sections. */
+.usage-line {
+  margin: var(--sp-2) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  line-height: 1.5;
 }

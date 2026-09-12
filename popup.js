@@ -136,20 +136,23 @@ function renderConsensusResult(state) {
     $('criticalFlagBox').classList.add('hidden');
   }
 
-  // guidance_enforcement is set by the code-side check in background.js
-  // when a LEARNED GUIDANCE rule was relevant but the model's own rating
-  // didn't reflect it (self-reported via guidance_impact, or detected by
-  // text-overlap when the model omitted it) — the rating shown above is
-  // already the post-penalty value; this box just explains why.
+  // guidance_enforcement is set by the deterministic post-hoc check in
+  // background.js (matchGuidanceAgainstResult) — an ordinary LEARNED
+  // GUIDANCE rule whose scope fits this video's format AND whose wording
+  // substantively overlaps with the model's own summary/contradicting
+  // points, checked only AFTER the model formed its rating (the model
+  // never sees ordinary guidance rules before answering) — the rating
+  // shown above is already the post-penalty value; this box just
+  // explains why.
   if (r.guidance_enforcement && r.guidance_enforcement.unresolvedRules && r.guidance_enforcement.unresolvedRules.length) {
     const ge = r.guidance_enforcement;
     $('guidanceEnforcementBox').classList.remove('hidden');
     $('guidanceEnforcementLabel').textContent =
-      `Rating auto-adjusted ${ge.originalRating} → ${ge.adjustedRating}: guidance not reflected in score`;
+      `Rating auto-adjusted ${ge.originalRating} → ${ge.adjustedRating}: matched standing guidance rule(s)`;
     $('guidanceEnforcementList').innerHTML = '';
     ge.unresolvedRules.forEach(u => {
       const li = document.createElement('li');
-      li.textContent = u.rule + (u.source === 'text_overlap_detected' ? ' (detected, not self-reported)' : '');
+      li.textContent = u.rule;
       $('guidanceEnforcementList').appendChild(li);
     });
   } else {

@@ -147,6 +147,14 @@ const SAFE_INNERHTML_EXPRESSIONS = new Set([
   // wraps every dynamic piece in escapeHtml()/isHttpUrl() before being
   // assigned (verified by direct read of dashboard.js lines building them).
   'resultCell(entry)', 'insightCell(entry)', 'videoLink', 'redoCell',
+  // renderGuidanceSummary()'s pill text — all four interpolations are
+  // derived purely from Array#filter().length on guidanceRules (active/
+  // critical/total counts) or arithmetic on those same numbers, never
+  // from rule text/user input, so nothing here needs escaping.
+  'active', "active === 1 ? '' : 's'",
+  'total !== active ? ` · ${total - active} off` : \'\'',
+  'critical ? ` <span class="dot-critical"></span> ${critical} critical` : \'\'',
+  'total - active', 'critical',
 ]);
 
 // Extracts the ${...} interpolation expressions from a template-literal

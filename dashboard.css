@@ -317,30 +317,6 @@ tr.detail-row.hidden {
   resize: vertical;
 }
 
-.thumbs {
-  display: flex;
-  gap: 4px;
-}
-
-.thumbs button {
-  border: 1px solid var(--border);
-  background: var(--card-bg-2);
-  border-radius: 8px;
-  cursor: pointer;
-  padding: 4px 7px;
-  font-size: 13px;
-}
-
-.thumbs button.active-up {
-  background: var(--mint);
-  border-color: var(--mint);
-}
-
-.thumbs button.active-down {
-  background: var(--red);
-  border-color: var(--red);
-}
-
 .delete-btn {
   border: none;
   background: none;
@@ -396,15 +372,43 @@ tr.detail-row.hidden {
   background: var(--card-bg);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  padding: 18px 20px;
   margin-bottom: 20px;
+  overflow: hidden;
 }
 
 .guidance-header {
   display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.guidance-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.guidance-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--text-dim);
+  font-size: 11px;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.guidance-wrap.collapsed .guidance-caret {
+  transform: rotate(-90deg);
+}
+
+.guidance-title-group {
+  display: flex;
   align-items: baseline;
   gap: 10px;
-  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 
@@ -416,10 +420,48 @@ tr.detail-row.hidden {
   color: var(--text-hi);
 }
 
+.guidance-header .muted-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.guidance-wrap.collapsed .muted-sub {
+  display: none;
+}
+
+.guidance-summary-pill {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--card-bg-2);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+
+.guidance-wrap.collapsed .guidance-summary-pill {
+  display: inline-flex;
+}
+
+.guidance-summary-pill .dot-critical {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
 .guidance-header-actions {
   margin-left: auto;
   display: flex;
   gap: 8px;
+}
+
+.guidance-wrap.collapsed .guidance-header-actions {
+  display: none;
 }
 
 .guidance-header-actions button {
@@ -437,9 +479,17 @@ tr.detail-row.hidden {
   background: #222;
 }
 
+.guidance-body {
+  padding: 0 20px 18px;
+}
+
+.guidance-wrap.collapsed .guidance-body {
+  display: none;
+}
+
 .guidance-import-status {
   font-size: 12px;
-  margin: -4px 0 10px;
+  margin: 0 0 10px;
 }
 
 .guidance-empty {

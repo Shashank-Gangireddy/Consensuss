@@ -19,21 +19,27 @@
 
     <section class="cards" id="cards"></section>
 
-    <section class="guidance-wrap">
-      <div class="guidance-header">
-        <h2>Learned Guidance</h2>
-        <span class="muted">Standing rules distilled from your corrections — applied to every future analysis.</span>
+    <section class="guidance-wrap collapsed" id="guidanceWrap">
+      <div class="guidance-header" id="guidanceHeader">
+        <span class="guidance-caret">▾</span>
+        <div class="guidance-title-group">
+          <h2>Learned Guidance</h2>
+          <span class="muted-sub">Standing rules distilled from your corrections — applied to every future analysis.</span>
+          <span class="guidance-summary-pill" id="guidanceSummaryPill"></span>
+        </div>
         <span class="guidance-header-actions">
           <button id="exportGuidanceBtn">Export Guidance</button>
           <button id="importGuidanceBtn">Import Guidance</button>
           <input id="importGuidanceFile" type="file" accept="application/json" class="hidden" />
         </span>
       </div>
-      <p id="importGuidanceStatus" class="muted guidance-import-status hidden"></p>
-      <div id="guidanceEmpty" class="hidden muted guidance-empty">
-        No learned rules yet. Use "Redo w/ note" on an analysis to teach the rater something new.
+      <div class="guidance-body">
+        <p id="importGuidanceStatus" class="muted guidance-import-status hidden"></p>
+        <div id="guidanceEmpty" class="hidden muted guidance-empty">
+          No learned rules yet. Use "Redo w/ note" on an analysis to teach the rater something new.
+        </div>
+        <ul id="guidanceList" class="guidance-list"></ul>
       </div>
-      <ul id="guidanceList" class="guidance-list"></ul>
     </section>
 
     <section class="table-wrap">
@@ -46,7 +52,6 @@
             <th>Category</th>
             <th>Result</th>
             <th>Insight</th>
-            <th>Accurate?</th>
             <th>Your Notes</th>
             <th>Redo</th>
             <th></th>

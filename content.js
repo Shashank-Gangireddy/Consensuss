@@ -618,7 +618,7 @@
       state.topCount = state.comments.length;
       state.newestCount = 0;
       state.fetchMethod = 'dom';
-      scrollBackToVideo();
+      await scrollBackToVideo();
     }
 
     state.status = 'idle';
@@ -626,13 +626,38 @@
     return state.comments;
   }
 
-  function scrollBackToVideo() {
+  // Scrolls back to the video player after the DOM-scroll comment fallback
+  // has scrolled deep down the page. A plain scrollIntoView({behavior:
+  // 'smooth'}) can silently fail to actually reach the target: YouTube's
+  // comment thumbnails/avatars keep loading and reflowing content for a
+  // beat after the scroll loop ends, and CSS scroll-anchoring (or a
+  // backgrounded/throttled tab) can fight or truncate the smooth animation
+  // so it stops partway and never gets corrected. This is now
+  // self-verifying instead of fire-and-forget: it kicks off the smooth
+  // scroll, polls scrollY, and if it hasn't actually landed near the top
+  // within SCROLL_BACK_TIMEOUT_MS, forces an instant scrollTo(0) as a
+  // guaranteed fallback rather than leaving the page stranded mid-page.
+  const SCROLL_BACK_TIMEOUT_MS = 2000;
+  const SCROLL_BACK_POLL_MS = 100;
+  const SCROLL_BACK_LANDED_THRESHOLD_PX = 40;
+
+  async function scrollBackToVideo() {
     const player = document.querySelector('#player') || document.querySelector('ytd-player');
     if (player) {
       player.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    const deadline = Date.now() + SCROLL_BACK_TIMEOUT_MS;
+    while (Date.now() < deadline) {
+      await sleep(SCROLL_BACK_POLL_MS);
+      if (window.scrollY <= SCROLL_BACK_LANDED_THRESHOLD_PX) return; // reached the top — done
+    }
+
+    // Smooth scroll never actually landed within the timeout — force it
+    // rather than leaving the page stranded wherever the scroll loop left it.
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   // ---------------------------------------------------------------------

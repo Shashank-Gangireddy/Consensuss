@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Consensus — Dashboard (mock)</title>
+<style>
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/BricolageGrotesque-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("fonts/BricolageGrotesque-800.woff2") format("woff2");
+}
+:root {
+  --bg: #0d0d0d;
+  --card-bg: #141414;
+  --card-bg-2: #1a1a1a;
+  --border: #262626;
+  --mint: #5CE0C0;
+  --mint-strong: #4fd6b3;
+  --mint-text: #0a0a0a;
+  --text-hi: #eafff7;
+  --text-mid: #b9c4c0;
+  --text-dim: #7c8783;
+  --amber: #f3c969;
+  --amber-bg: #2b2415;
+  --amber-text: #2b2415;
+  --red: #ef7a6b;
+  --red-bg: #2b1917;
+  --red-text: #2b1917;
+  --radius-lg: 26px;
+  --radius-md: 18px;
+  --radius-sm: 10px;
+  --font-display: "Bricolage Grotesque", "Inter", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-hi);
+  margin: 0;
+  padding: 28px;
+}
+.wrap { max-width: 1200px; margin: 0 auto; }
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.01em; margin: 0; color: var(--text-hi); }
+.badge-note { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.actions button { margin-left: 8px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--card-bg-2); color: var(--text-hi); cursor: pointer; font-size: 13px; font-weight: 600; font-family: var(--font-body); }
+.actions button:hover { background: #222; }
+.actions button.danger { background: var(--red-bg); border-color: #4a2622; color: #ffb9ab; }
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.card { background: var(--card-bg); border-radius: var(--radius-md); padding: 16px 18px; border: 1px solid var(--border); }
+.card .label { font-size: 10.5px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em; font-weight: 700; }
+.card .value { font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--mint); margin-top: 6px; }
+
+/* ---- Learned Guidance: now collapsible ---- */
+.guidance-wrap { background: var(--card-bg); border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
+.guidance-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.guidance-header:hover { background: rgba(255,255,255,0.02); }
+.guidance-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--text-dim);
+  font-size: 11px;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+.guidance-wrap.collapsed .guidance-caret { transform: rotate(-90deg); }
+.guidance-title-group { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.guidance-header h2 { font-family: var(--font-display); font-weight: 800; font-size: 16px; margin: 0; color: var(--text-hi); }
+.guidance-summary-pill {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--card-bg-2);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+.guidance-wrap.collapsed .guidance-summary-pill { display: inline-flex; }
+.guidance-summary-pill .dot-critical { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+.guidance-header .muted-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.guidance-wrap.collapsed .muted-sub { display: none; }
+.guidance-header-actions { margin-left: auto; display: flex; gap: 8px; }
+.guidance-wrap.collapsed .guidance-header-actions { display: none; }
+.guidance-header-actions button { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--card-bg-2); color: var(--text-hi); cursor: pointer; font-size: 12px; font-weight: 600; }
+.guidance-header-actions button:hover { background: #222; }
+.guidance-body { padding: 0 20px 18px; }
+.guidance-wrap.collapsed .guidance-body { display: none; }
+.guidance-empty { font-size: 13px; padding: 6px 0; color: var(--text-dim); }
+.guidance-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.guidance-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card-bg-2); }
+.guidance-item.inactive { opacity: 0.5; }
+.guidance-item .g-toggle { margin-top: 3px; cursor: pointer; }
+.guidance-item .g-body { flex: 1; min-width: 0; }
+.guidance-item .g-rule { font-size: 13px; color: var(--text-hi); }
+.guidance-item .g-meta { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.guidance-item .g-scope { display: inline-block; padding: 1px 7px; border-radius: 999px; background: #241c3d; color: #c7a9ff; font-size: 10px; font-weight: 700; margin-right: 6px; }
+.guidance-item .g-severity-critical { display: inline-block; padding: 1px 7px; border-radius: 999px; background: var(--red-bg); color: #ffb9ab; font-size: 10px; font-weight: 800; letter-spacing: 0.03em; margin-right: 6px; }
+.guidance-item .g-state { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.03em; margin-right: 6px; }
+.guidance-item .g-state.on { background: var(--mint); color: var(--mint-text); }
+.guidance-item .g-state.off { background: var(--card-bg); color: var(--text-dim); border: 1px solid var(--border); }
+.guidance-item .g-actions { display: flex; gap: 6px; }
+.guidance-item .g-actions button { border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: 13px; padding: 2px 4px; }
+.guidance-item .g-actions button:hover { color: var(--red); }
+
+/* ---- Table: Accurate column removed, cleaner spacing ---- */
+.table-wrap { background: var(--card-bg); border-radius: var(--radius-md); border: 1px solid var(--border); overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th, td { text-align: left; padding: 16px 18px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+th { background: var(--card-bg-2); position: sticky; top: 0; font-size: 10.5px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.04em; font-weight: 700; padding: 13px 18px; }
+tr:hover td { background: rgba(255, 255, 255, 0.025); }
+.video-cell a { color: var(--text-hi); text-decoration: none; font-weight: 700; }
+.video-cell a:hover { text-decoration: underline; }
+.video-cell { line-height: 1.4; }
+.rating-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-weight: 800; font-size: 11.5px; white-space: nowrap; }
+.rating-good { background: var(--mint); color: var(--mint-text); }
+.rating-mid { background: var(--amber); color: var(--amber-text); }
+.rating-bad { background: var(--red); color: var(--red-text); }
+.rating-none { background: var(--card-bg-2); color: var(--text-mid); border: 1px solid var(--border); }
+.result-cell-inner { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; row-gap: 6px; }
+.result-verdict { white-space: nowrap; }
+.badge-flag-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); display: inline-block; flex-shrink: 0; }
+.badge-flag-dot.ge { background: var(--amber); }
+.detail-result-line { flex-basis: 100%; color: var(--text-hi); font-weight: 600; }
+th.col-result, td.result-cell { width: 90px; }
+.insight-cell { max-width: 140px; }
+.insight-btn { background: none; border: 1px solid var(--border); color: var(--text-mid); border-radius: 999px; padding: 5px 12px; font-size: 11.5px; font-weight: 600; font-family: var(--font-body); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.insight-btn:hover { background: var(--card-bg-2); color: var(--text-hi); }
+.insight-btn .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); flex-shrink: 0; }
+.insight-btn.empty { opacity: 0.4; cursor: default; }
+.insight-btn.empty:hover { background: none; color: var(--text-mid); }
+.row-expand { border: none; background: none; cursor: pointer; font-size: 12px; color: var(--text-dim); padding: 4px 8px; width: 100%; border-radius: 6px; }
+.row-expand:hover { color: var(--text-hi); background: var(--card-bg-2); }
+tr.detail-row td { background: rgba(255, 255, 255, 0.02); padding: 12px 18px; border-bottom: 1px solid var(--border); }
+tr.detail-row.hidden { display: none; }
+.detail-grid { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 12px; color: var(--text-mid); line-height: 1.6; }
+.notes-input { width: 190px; min-height: 42px; font-size: 12px; font-family: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg-2); color: var(--text-hi); resize: vertical; line-height: 1.4; }
+.redo-btn { padding: 7px 14px; border-radius: 999px; border: 1px solid #3a2d52; background: #1d1730; color: #c7a9ff; cursor: pointer; font-size: 12px; white-space: nowrap; }
+.redo-btn:hover:not(:disabled) { background: #241c3d; }
+.redo-btn:disabled { opacity: 0.6; cursor: default; }
+.redo-status { margin-top: 6px; font-size: 11px; min-height: 14px; color: var(--text-dim); }
+.delete-btn { border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: 15px; padding: 6px; border-radius: 6px; }
+.delete-btn:hover { color: var(--red); background: var(--red-bg); }
+.muted { color: var(--text-dim); }
+.hidden { display: none !important; }
+.review-callout {
+  background: var(--card-bg-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 12.5px;
+  color: var(--text-mid);
+  margin-bottom: 18px;
+}
+.review-callout b { color: var(--mint); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="review-callout">
+      <b>Mock for review</b> — 1) Learned Guidance is now collapsible (click header), showing a rule-count summary while collapsed. 2) "Accurate?" column removed from the table; row padding/gaps tightened for cleaner spacing. Nothing here is wired to real data.
+    </div>
+
+    <header>
+      <h1>Consensus — Dashboard</h1>
+      <div class="actions">
+        <button id="exportBtn">Export CSV</button>
+        <button id="exportJsonBtn">Export JSON</button>
+        <button id="clearBtn" class="danger">Clear All</button>
+      </div>
+    </header>
+
+    <section class="cards" id="cards"></section>
+
+    <section class="guidance-wrap collapsed" id="guidanceWrap">
+      <div class="guidance-header" id="guidanceHeader">
+        <span class="guidance-caret">▾</span>
+        <div class="guidance-title-group">
+          <h2>Learned Guidance</h2>
+          <span class="muted-sub">Standing rules distilled from your corrections — applied to every future analysis.</span>
+          <span class="guidance-summary-pill" id="guidanceSummaryPill"></span>
+        </div>
+        <span class="guidance-header-actions">
+          <button id="exportGuidanceBtn">Export Guidance</button>
+          <button id="importGuidanceBtn">Import Guidance</button>
+        </span>
+      </div>
+      <div class="guidance-body">
+        <div id="guidanceEmpty" class="hidden muted guidance-empty">
+          No learned rules yet. Use "Redo w/ note" on an analysis to teach the rater something new.
+        </div>
+        <ul id="guidanceList" class="guidance-list"></ul>
+      </div>
+    </section>
+
+    <section class="table-wrap">
+      <table id="historyTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Date</th>
+            <th>Video</th>
+            <th>Category</th>
+            <th class="col-result">Result</th>
+            <th>Insight</th>
+            <th>Your Notes</th>
+            <th>Redo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <p id="emptyState" class="hidden muted">No analyses logged yet. Rate a video, then refresh this page.</p>
+    </section>
+  </div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ---- Mock data (shape mirrors real history/guidance entries) ----
+const history = [
+  {
+    id: 'h1', ts: Date.now() - 1000*60*60*2, path: 'consensus',
+    title: 'Why Everyone Is Wrong About Electric Cars', videoUrl: 'https://www.youtube.com/watch?v=abc123',
+    contentCategory: 'Tech / Auto', rating: 8, verdict: 'Well-supported, minor overstatement on range claims',
+    topRecommendation: 'Comments repeatedly flag that the 2024 battery data cited is already outdated — check for a newer source before trusting the number.',
+    commentsAnalyzed: 142, commentsFetched: 160, topCount: 100, newestCount: 60,
+    promptTokens: 5400, completionTokens: 620, totalTokens: 6020, estCostUSD: 0.0083,
+    provider: 'openai', model: 'gpt-4o-mini', ratingDimension: 'Factual accuracy of core claim',
+    helpful: true, note: ''
+  },
+  {
+    id: 'h2', ts: Date.now() - 1000*60*60*26, path: 'consensus',
+    title: 'The Truth About Cold Plunges', videoUrl: 'https://www.youtube.com/watch?v=def456',
+    contentCategory: 'Health', rating: 3, verdict: 'Cherry-picked studies, comments push back hard',
+    criticalFlag: { corroboration: 'Strong', note: 'Multiple top comments cite the same retracted study the video leans on.' },
+    topRecommendation: 'A cited nurse in the comments links the retraction notice directly — worth reading before trusting this video\'s central claim.',
+    commentsAnalyzed: 88, commentsFetched: 95, topCount: 70, newestCount: 18, fetchMethod: 'dom',
+    promptTokens: 4100, completionTokens: 540, totalTokens: 4640, estCostUSD: 0.0061,
+    provider: 'openai', model: 'gpt-4o-mini', contested: true,
+    helpful: false, note: 'missed sarcasm in comment #4'
+  },
+  {
+    id: 'h3', ts: Date.now() - 1000*60*60*50, path: 'consensus',
+    title: 'I Tested Every Budget Mechanical Keyboard', videoUrl: 'https://www.youtube.com/watch?v=ghi789',
+    contentCategory: 'Tech / Review', rating: 6,
+    verdict: 'Mixed — testing methodology questioned by several commenters',
+    guidanceEnforcement: { originalRating: 8, unresolvedRules: [{ rule: 'Down-weight reviews that don\'t disclose sponsorship status' }] },
+    topRecommendation: '',
+    commentsAnalyzed: 61, commentsFetched: 61, topCount: 61, newestCount: 0,
+    promptTokens: 3200, completionTokens: 410, totalTokens: 3610, estCostUSD: 0.0049,
+    provider: 'anthropic', model: 'claude-3-5-haiku',
+    helpful: null, note: ''
+  },
+  {
+    id: 'h4', ts: Date.now() - 1000*60*60*70, path: 'vibes', consensusLean: 'Positive', agreementStrength: 'Strong majority',
+    title: 'This Small Apartment Renovation Is Incredible', videoUrl: 'https://www.youtube.com/watch?v=jkl012',
+    contentCategory: 'Lifestyle', caveat: 'A few commenters note the "before" shots look staged/wider-angle than the after.',
+    commentsAnalyzed: 210, commentsFetched: 240, topCount: 150, newestCount: 60,
+    promptTokens: 6100, completionTokens: 300, totalTokens: 6400, estCostUSD: 0.0071,
+    provider: 'openai', model: 'gpt-4o-mini', evidenceVolume: 'High', consensusType: 'Broad Agreement',
+    helpful: true, note: ''
+  },
+  {
+    id: 'h5', ts: Date.now() - 1000*60*60*95, path: 'vibes', authenticityLean: 'Disputed',
+    title: 'My Dog Reacted To This... (Emotional)', videoUrl: 'https://www.youtube.com/watch?v=mno345',
+    contentCategory: 'Pets', caveat: 'Split between "clearly genuine" and "obviously cut for a reaction shot" — no clear majority.',
+    commentsAnalyzed: 175, commentsFetched: 200, topCount: 130, newestCount: 45,
+    promptTokens: 5800, completionTokens: 340, totalTokens: 6140, estCostUSD: 0.0068,
+    provider: 'openai', model: 'gpt-4o-mini', evidenceVolume: 'Medium', consensusType: 'Split-Opinion',
+    helpful: null, note: ''
+  },
+  {
+    id: 'h6', ts: Date.now() - 1000*60*60*140, path: 'vibes',
+    title: 'Old cached vibes entry (legacy shape)', videoUrl: 'https://www.youtube.com/watch?v=pqr678',
+    contentCategory: 'Misc', mode: 'quick', summary: 'Legacy entry — predates the consensus_lean schema unification.',
+    commentsAnalyzed: 40, commentsFetched: 40,
+    promptTokens: 1800, completionTokens: 150, totalTokens: 1950, estCostUSD: 0.0021,
+    provider: 'openai', model: 'gpt-4o-mini',
+    helpful: null, note: ''
+  }
+];
+
+const redditLog = [
+  { ts: Date.now() - 1000*60*60*3, estCostUSD: 0.0012 },
+  { ts: Date.now() - 1000*60*60*30, estCostUSD: 0.0009 },
+  { ts: Date.now() - 1000*60*60*80, estCostUSD: 0.0015 }
+];
+
+const guidanceRules = [
+  { id: 'g1', rule: 'Down-weight reviews that don\'t disclose sponsorship status.', active: true, severity: 'normal', scope: 'global', timesApplied: 4, createdAt: Date.now() - 1000*60*60*24*6, sourceVideoTitle: 'I Tested Every Budget Mechanical Keyboard' },
+  { id: 'g2', rule: 'Treat health claims sourced from a single small study as unproven, even if the video presents them as settled.', active: true, severity: 'critical', scope: 'Health', timesApplied: 9, createdAt: Date.now() - 1000*60*60*24*11, sourceVideoTitle: 'The Truth About Cold Plunges' },
+  { id: 'g3', rule: 'When comments are split roughly 50/50 on authenticity, report it as genuinely disputed rather than picking the larger side.', active: true, severity: 'normal', scope: 'global', timesApplied: 2, createdAt: Date.now() - 1000*60*60*24*3 },
+  { id: 'g4', rule: 'Ignore engagement-bait pinned comments when judging consensus direction.', active: false, severity: 'normal', scope: 'global', timesApplied: 1, createdAt: Date.now() - 1000*60*60*24*20 }
+];
+
+function fmtDate(ts) {
+  return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function fmtCost(v) {
+  if (v == null) return '-';
+  return v < 0.01 ? `$${v.toFixed(5)}` : `$${v.toFixed(4)}`;
+}
+function fmtRelDate(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function ratingClass(r) {
+  if (r >= 8) return 'rating-good';
+  if (r >= 4) return 'rating-mid';
+  return 'rating-bad';
+}
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function isHttpUrl(str) {
+  if (!str) return false;
+  try { const u = new URL(str); return u.protocol === 'https:' || u.protocol === 'http:'; } catch { return false; }
+}
+
+const LEAN_CLASS = { Positive: 'rating-good', Negative: 'rating-bad', Split: 'rating-mid', 'Insufficient Evidence': 'rating-none' };
+const AUTH_LEAN_CLASS = { Real: 'rating-good', Staged: 'rating-bad', Disputed: 'rating-mid' };
+function isLegacyVibesEntry(entry) { return entry.path === 'vibes' && entry.consensusLean === undefined; }
+
+// Result column now shows ONLY the score/lean badge — a short glance
+// value. Everything that used to ride along here (verdict text, critical
+// flag, guidance enforcement note, agreement strength) moved into the
+// detail row (see detailRowHtml) and/or the badge's title tooltip, so the
+// info isn't lost, just not competing for column width anymore.
+function resultCell(entry) {
+  if (entry.path !== 'vibes') {
+    const title = [entry.verdict, entry.criticalFlag ? `⚠ ${entry.criticalFlag.corroboration} corroboration` : '', entry.guidanceEnforcement ? `⬇ guidance-adjusted (was ${entry.guidanceEnforcement.originalRating})` : '']
+      .filter(Boolean).join(' — ');
+    const flagDot = entry.criticalFlag ? '<span class="badge-flag-dot" title="Critical flag raised"></span>' : '';
+    const geDot = entry.guidanceEnforcement ? '<span class="badge-flag-dot ge" title="Guidance-adjusted rating"></span>' : '';
+    return `<span class="result-cell-inner" title="${escapeHtml(title)}"><span class="rating-badge ${ratingClass(entry.rating)}">${entry.rating}/10</span>${flagDot}${geDot}</span>`;
+  }
+  if (isLegacyVibesEntry(entry)) return `<span class="muted">Vibes (legacy)</span>`;
+  if (entry.authenticityLean) {
+    const label = entry.authenticityLean === 'Disputed' ? 'Disputed' : `Likely ${entry.authenticityLean}`;
+    return `<span class="result-cell-inner"><span class="rating-badge ${AUTH_LEAN_CLASS[entry.authenticityLean] || 'rating-none'}">${escapeHtml(label)}</span></span>`;
+  }
+  const lean = entry.consensusLean || 'Insufficient Evidence';
+  return `<span class="result-cell-inner" title="${escapeHtml(entry.agreementStrength || '')}"><span class="rating-badge ${LEAN_CLASS[lean] || 'rating-none'}">${escapeHtml(lean)}</span></span>`;
+}
+
+function insightText(entry) {
+  if (entry.path !== 'vibes') return entry.topRecommendation || '';
+  if (isLegacyVibesEntry(entry)) return entry.summary || '';
+  return entry.caveat || entry.summary || '';
+}
+function insightCell(entry) {
+  const text = insightText(entry);
+  if (!text) return '<span class="insight-btn empty">&mdash;</span>';
+  return `<button class="insight-btn" type="button" title="${escapeHtml(text)}"><span class="dot"></span>View</button>`;
+}
+
+function detailRowHtml(entry) {
+  const usage = `${entry.commentsAnalyzed ?? '-'}${entry.commentsFetched ? ' / ' + entry.commentsFetched : ''} comments sent/fetched`;
+  let poolSplit = '';
+  if (entry.topCount != null || entry.newestCount != null) {
+    if (entry.fetchMethod === 'dom') poolSplit = `Fetch: DOM fallback, Top only (${entry.topCount ?? 0})`;
+    else poolSplit = `Fetch: ${entry.topCount ?? 0} Top + ${entry.newestCount ?? 0} Newest`;
+  }
+  const tokens = `${entry.promptTokens ?? 0} / ${entry.completionTokens ?? 0} / ${entry.totalTokens ?? 0} tokens (in/out/total)`;
+  const cost = fmtCost(entry.estCostUSD);
+  const model = `${escapeHtml(entry.provider || '')} · ${escapeHtml(entry.model || '')}`;
+  const vol = entry.evidenceVolume ? `Evidence: ${escapeHtml(entry.evidenceVolume)}` : '';
+  // Verdict/flag/enforcement text used to live inline in the Result cell —
+  // now that column only shows the bare score, surface that text here so
+  // it's still one click away instead of gone.
+  let resultLine = '';
+  if (entry.path !== 'vibes') {
+    const bits = [];
+    if (entry.verdict) bits.push(escapeHtml(entry.verdict));
+    if (entry.criticalFlag) bits.push(`⚠ ${escapeHtml(entry.criticalFlag.corroboration)} corroboration${entry.criticalFlag.note ? ' — ' + escapeHtml(entry.criticalFlag.note) : ''}`);
+    if (entry.guidanceEnforcement) bits.push(`⬇ guidance-adjusted (was ${entry.guidanceEnforcement.originalRating}/10)`);
+    resultLine = bits.join(' · ');
+  } else if (entry.agreementStrength) {
+    resultLine = escapeHtml(entry.agreementStrength);
+  }
+
+  let extra = '';
+  if (entry.path !== 'vibes') {
+    const bits = [];
+    if (entry.ratingDimension) bits.push(`Judged on: ${escapeHtml(entry.ratingDimension)}`);
+    if (entry.contested) bits.push('Disputed (substantial support + contradiction)');
+    extra = bits.join(' · ');
+  } else if (!isLegacyVibesEntry(entry)) {
+    const bits = [];
+    if (entry.consensusType === 'Split-Opinion') bits.push('Split opinion (genuinely divided)');
+    if (entry.authenticityLean) bits.push(`Authenticity: ${escapeHtml(entry.authenticityLean)}`);
+    extra = bits.join(' · ');
+  }
+  return `
+    <td></td>
+    <td colspan="7">
+      <div class="detail-grid">
+        ${resultLine ? `<span class="detail-result-line">${resultLine}</span>` : ''}
+        <span>${model}</span>
+        <span>${escapeHtml(usage)}</span>
+        ${poolSplit ? `<span>${escapeHtml(poolSplit)}</span>` : ''}
+        <span>${escapeHtml(tokens)}</span>
+        <span>${cost}</span>
+        ${vol ? `<span>${vol}</span>` : ''}
+        ${extra ? `<span>${extra}</span>` : ''}
+      </div>
+    </td>
+  `;
+}
+
+function renderCards() {
+  const n = history.length;
+  const consensusEntries = history.filter(h => h.path !== 'vibes');
+  const totalTokens = history.reduce((a, h) => a + (h.totalTokens || 0), 0);
+  const analysisCost = history.reduce((a, h) => a + (h.estCostUSD || 0), 0);
+  const redditCost = redditLog.reduce((a, h) => a + (h.estCostUSD || 0), 0);
+  const totalCostAll = analysisCost + redditCost;
+  const avgTokens = n ? Math.round(totalTokens / n) : 0;
+  const avgCost = n ? analysisCost / n : 0;
+  const vibesCount = n - consensusEntries.length;
+  $('cards').innerHTML = `
+    <div class="card"><div class="label">Analyses</div><div class="value">${n}${vibesCount ? ` <span class="muted" style="font-size:12px">(${consensusEntries.length} rated, ${vibesCount} vibes)</span>` : ''}</div></div>
+    <div class="card"><div class="label">Total Tokens</div><div class="value">${totalTokens.toLocaleString()}</div></div>
+    <div class="card"><div class="label">Total Est. Cost</div><div class="value">${fmtCost(totalCostAll)} <span class="muted" style="font-size:12px">(${fmtCost(analysisCost)} analysis, ${fmtCost(redditCost)} reddit)</span></div></div>
+    <div class="card"><div class="label">Avg / Analysis</div><div class="value">${avgTokens.toLocaleString()} tok · ${fmtCost(avgCost)}</div></div>
+  `;
+}
+
+function renderGuidanceSummary() {
+  const active = guidanceRules.filter(g => g.active !== false).length;
+  const critical = guidanceRules.filter(g => g.severity === 'critical' && g.active !== false).length;
+  const total = guidanceRules.length;
+  const pill = $('guidanceSummaryPill');
+  if (!total) { pill.innerHTML = 'No rules yet'; return; }
+  pill.innerHTML = `${active} active rule${active === 1 ? '' : 's'}${total !== active ? ` · ${total - active} off` : ''}${critical ? ` <span class="dot-critical"></span> ${critical} critical` : ''}`;
+}
+
+function renderGuidance() {
+  renderGuidanceSummary();
+  const list = $('guidanceList');
+  list.innerHTML = '';
+  const sorted = [...guidanceRules].sort((a, b) => b.createdAt - a.createdAt);
+  $('guidanceEmpty').classList.toggle('hidden', sorted.length > 0);
+  sorted.forEach(g => {
+    const li = document.createElement('li');
+    li.className = 'guidance-item' + (g.active === false ? ' inactive' : '');
+    const scopeLabel = g.scope && g.scope !== 'global' ? g.scope : 'All videos';
+    const appliedLabel = g.timesApplied ? `Applied ${g.timesApplied}x` : 'Not applied yet';
+    const sourceLabel = g.sourceVideoTitle ? `From: "${g.sourceVideoTitle}"` : '';
+    const isCritical = g.severity === 'critical';
+    li.innerHTML = `
+      <input type="checkbox" class="g-toggle" ${g.active !== false ? 'checked' : ''} title="${g.active !== false ? 'Active — applied to future analyses. Click to turn off.' : 'Inactive — not applied to future analyses. Click to turn on.'}" />
+      <div class="g-body">
+        <div class="g-rule">${escapeHtml(g.rule)}</div>
+        <div class="g-meta">
+          <span class="g-state ${g.active !== false ? 'on' : 'off'}">${g.active !== false ? 'Active' : 'Inactive'}</span>
+          ${isCritical ? '<span class="g-severity-critical" title="Creator genuineness/trust rule — can force a low rating">CRITICAL</span>' : ''}
+          <span class="g-scope">${escapeHtml(scopeLabel)}</span>
+          ${appliedLabel} · Learned ${fmtRelDate(g.createdAt)}${sourceLabel ? ' · ' + escapeHtml(sourceLabel) : ''}
+        </div>
+      </div>
+      <div class="g-actions"><button class="g-delete" title="Delete this rule">✕</button></div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function renderTable() {
+  const body = $('historyBody');
+  body.innerHTML = '';
+  $('emptyState').classList.toggle('hidden', history.length > 0);
+  const sorted = [...history].sort((a, b) => b.ts - a.ts);
+  sorted.forEach(entry => {
+    const tr = document.createElement('tr');
+    const safeVideoUrl = isHttpUrl(entry.videoUrl) ? entry.videoUrl : null;
+    const videoLink = safeVideoUrl
+      ? `<a href="${escapeHtml(safeVideoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(entry.title || safeVideoUrl)}</a>`
+      : escapeHtml(entry.title || '(unknown)');
+    const isVibes = entry.path === 'vibes';
+    const redoCell = isVibes
+      ? '<span class="muted">n/a (vibes)</span>'
+      : `<button class="redo-btn" title="Re-scrape comments and re-run the analysis">↻ Redo w/ note</button><div class="redo-status muted"></div>`;
+    tr.innerHTML = `
+      <td><button class="row-expand" title="Show details">▸</button></td>
+      <td>${fmtDate(entry.ts)}</td>
+      <td class="video-cell">${videoLink}</td>
+      <td>${escapeHtml(entry.contentCategory || '-')}</td>
+      <td class="result-cell">${resultCell(entry)}</td>
+      <td class="insight-cell">${insightCell(entry)}</td>
+      <td><textarea class="notes-input" placeholder="e.g. missed sarcasm in comment #4...">${escapeHtml(entry.note || '')}</textarea></td>
+      <td>${redoCell}</td>
+      <td><button class="delete-btn" title="Delete this entry">✕</button></td>
+    `;
+    const detailTr = document.createElement('tr');
+    detailTr.className = 'detail-row hidden';
+    detailTr.innerHTML = detailRowHtml(entry);
+    tr.querySelector('.row-expand').addEventListener('click', () => {
+      const nowHidden = detailTr.classList.toggle('hidden');
+      tr.querySelector('.row-expand').textContent = nowHidden ? '▸' : '▾';
+    });
+    body.appendChild(tr);
+    body.appendChild(detailTr);
+  });
+}
+
+$('guidanceHeader').addEventListener('click', (e) => {
+  $('guidanceWrap').classList.toggle('collapsed');
+});
+// Prevent header-level buttons from toggling collapse when clicked directly.
+$('exportGuidanceBtn')?.addEventListener('click', e => e.stopPropagation());
+$('importGuidanceBtn')?.addEventListener('click', e => e.stopPropagation());
+
+renderCards();
+renderGuidance();
+renderTable();
+</script>
+</body>
+</html>

@@ -166,12 +166,29 @@ function checkAnalysisCooldown(videoId) {
 const REDDIT_COOLDOWN_MS = 8000;
 const recentRedditAt = new Map();
 
+// A failed LLM query-builder call (see buildRedditQueryWithLLM) gets its own,
+// longer cooldown before the user can retry — distinct from the normal
+// REDDIT_COOLDOWN_MS debounce above, which is about not double-firing a
+// *successful* flow. A query-builder failure is usually a transient API/key
+// problem, and immediately hammering "retry" burns another paid LLM call on
+// the same likely-to-fail request.
+const REDDIT_QUERY_FAILURE_COOLDOWN_MS = 30000;
+const recentRedditQueryFailureAt = new Map();
+
 function checkRedditCooldown(videoId) {
   checkGlobalRateLimit();
   if (!videoId) return;
   const key = 'reddit_' + videoId;
-  const last = recentRedditAt.get(key);
   const now = Date.now();
+
+  const failKey = 'redditqfail_' + videoId;
+  const lastFail = recentRedditQueryFailureAt.get(failKey);
+  if (lastFail && now - lastFail < REDDIT_QUERY_FAILURE_COOLDOWN_MS) {
+    const remainingSec = Math.ceil((REDDIT_QUERY_FAILURE_COOLDOWN_MS - (now - lastFail)) / 1000);
+    throw new Error(`Reddit search-query lookup failed last time — please wait ${remainingSec}s before retrying.`);
+  }
+
+  const last = recentRedditAt.get(key);
   if (last && now - last < REDDIT_COOLDOWN_MS) {
     throw new Error('Please wait a few seconds before re-validating the same video again.');
   }
@@ -180,6 +197,16 @@ function checkRedditCooldown(videoId) {
     const oldestKey = [...recentRedditAt.entries()].sort((a, b) => a[1] - b[1])[0][0];
     recentRedditAt.delete(oldestKey);
   }
+}
+
+function recordRedditQueryFailure(videoId) {
+  if (!videoId) return;
+  recentRedditQueryFailureAt.set('redditqfail_' + videoId, Date.now());
+}
+
+function clearRedditQueryFailure(videoId) {
+  if (!videoId) return;
+  recentRedditQueryFailureAt.delete('redditqfail_' + videoId);
 }
 
 async function getSettings() {
@@ -746,6 +773,19 @@ async function callGemini({ apiKey, model }, system, user) {
 // ---------------------------------------------------------------------
 
 const REDDIT_SEARCH_URL = 'https://www.reddit.com/search.json';
+
+// Video formats the PART 2 prompt above actually instructs the model to
+// fill top_recommendation in for (see the per-format rules starting
+// "video_format = ..." earlier in this file) — every other format is
+// explicitly told top_recommendation = null "(not applicable)". Mirrors
+// popup.js's FORMATS_WITH_RECOMMENDATION exactly; kept as a separate
+// constant here (background.js and popup.js run in different script
+// contexts with no shared module system) rather than a single source of
+// truth — if the prompt's format list changes, update both.
+const FORMATS_WITH_RECOMMENDATION = new Set([
+  'Comparison', 'List/Roundup', 'Review', 'Bug Fix / Patch / Troubleshooting', 'Tutorial/Howto', 'Advice/Opinion'
+]);
+
 const REDDIT_MAX_THREADS = 3;
 const REDDIT_COMMENTS_PER_THREAD = 12;
 const REDDIT_MAX_COMMENT_CHARS = 260;
@@ -1048,15 +1088,6 @@ function stripCommonFiller(text) {
   return q;
 }
 
-function extractComparisonEntities(title) {
-  const m = String(title || '').match(/(.+?)\s+(?:vs\.?|versus)\s+([^-|(]+)/i);
-  if (!m) return null;
-  const left = m[1].trim();
-  const right = m[2].trim();
-  if (!left || !right) return null;
-  return { left, right };
-}
-
 // Picks ONE distinctive keyword from the title to disambiguate a short/
 // generic recommendation — deliberately just one word, not a phrase, per
 // the "over-constraining returns zero results" finding above.
@@ -1144,105 +1175,76 @@ function isProseRecommendation(text) {
 // caused a real bug: a non-review title with a parenthetical suffix was
 // incorrectly treated as review-shaped and paired into a nonsensical
 // "vs" query.
-const REDDIT_REVIEW_SUFFIX_PATTERN = /\s*[-|:]?\s*(full |honest |in-depth |long[- ]term )?review\b.*$|\s*[-|:]?\s*(is it )?worth (it|the (money|hype|buy))\??.*$|\s*[-|:]?\s*(months?|weeks?|years?) (later|in)\b.*$/i;
+// ---------------------------------------------------------------------
+// LLM-driven Reddit search-query builder (consensus path only).
+//
+// Replaces the previous purely-heuristic buildRedditQuery(): instead of
+// regex/keyword-extraction rules trying to guess a good search string from
+// the crowd's top_recommendation + title, this sends both to the model and
+// asks it directly for the Reddit search query it thinks will surface the
+// most relevant independent discussion. Costs one extra small LLM call
+// (see REDDIT_QUERY_SYSTEM_PROMPT — kept deliberately tiny: short system
+// prompt, two short input fields, single-field JSON output) on top of the
+// existing evidence-synthesis call in validateWithReddit.
+//
+// Deliberately narrow inputs — ONLY the crowd top_recommendation and the
+// video title, matching what the old heuristic used, not the full
+// description/category/etc. Keeps the prompt (and therefore the cost)
+// small, and keeps this call focused on the one thing worth an independent
+// Reddit search: the specific claim/pick, not the whole video context.
+//
+// Failure handling: unlike the evidence-synthesis call (which degrades
+// gracefully to "Insufficient Reddit Evidence" on zero threads), a failure
+// HERE means no query was ever produced — there's nothing useful to fall
+// back to silently. validateWithReddit lets this error propagate and
+// records a failure timestamp (see recordRedditQueryFailure /
+// REDDIT_QUERY_FAILURE_COOLDOWN_MS above) so a rapid retry from the popup
+// doesn't immediately burn another paid call on the same likely-to-fail
+// request.
+// ---------------------------------------------------------------------
 
-function extractReviewSubject(title) {
-  const str = String(title || '');
-  if (!REDDIT_REVIEW_SUFFIX_PATTERN.test(str)) return null; // pattern genuinely didn't match — not review-shaped
-  let subject = str.replace(REDDIT_REVIEW_SUFFIX_PATTERN, '').trim();
-  subject = subject.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
-  return subject || null;
+const REDDIT_QUERY_SYSTEM_PROMPT = `You write ONE short Reddit search query to find independent discussion that would corroborate or contradict a specific crowd pick/recommendation from a YouTube video's comments.
+
+Rules:
+- Output a short search-engine-style query (roughly 2-6 words), not a sentence.
+- Anchor on the SPECIFIC claim/recommendation, not the general video topic — the goal is to find Reddit threads discussing that specific thing, not the video's broader subject.
+- If the recommendation is vague/generic on its own (e.g. "restart", "the cheaper one"), add ONE distinctive term from the title for context.
+- If the recommendation is itself a full sentence with reasoning attached, reduce it to just the core searchable subject/claim.
+- Never invent brand/product names not present in the title or recommendation.
+- If there is no usable recommendation at all, build the query from the title's actual subject instead.
+
+Respond with STRICT JSON only, no markdown fences:
+{"query": <short search query string>}`;
+
+function buildRedditQueryPrompt(title, ytResult) {
+  const rec = ytResult && typeof ytResult.top_recommendation === 'string' ? ytResult.top_recommendation.trim() : '';
+  const user = `VIDEO TITLE:\n"${String(title || '')}"\n\nCROWD TOP RECOMMENDATION (from this video's own comments):\n${rec || '(none — no specific pick emerged)'}\n\nReturn the JSON now.`;
+  return { system: REDDIT_QUERY_SYSTEM_PROMPT, user };
 }
 
-// Primary query builder. Deliberately IGNORES ytResult.video_format
-// entirely — every branch here is driven only by (a) whether a crowd
-// top_recommendation exists, and (b) TEXT PATTERNS in the title itself
-// ("X vs Y", a review-style suffix). This replaced an earlier version that
-// branched on video_format ("if format === 'Comparison'", "if format ===
-// 'Review'") — that kept breaking every time a real title didn't fit one
-// of the model's fixed classification buckets (advice videos, listicles,
-// etc. all fell through to a raw/lightly-cleaned full-title search before
-// this rewrite). Now: a crowd recommendation is always preferred when
-// present; with no recommendation, the query is built from extracted
-// KEYWORDS (extractKeywords, above) — never the raw or lightly-cleaned
-// full title, regardless of what format the video got classified as.
-function buildRedditQuery(title, ytResult) {
-  const raw = String(title || '');
-  const rec = ytResult && typeof ytResult.top_recommendation === 'string' ? ytResult.top_recommendation.trim() : null;
+async function buildRedditQueryWithLLM(title, ytResult, settings) {
+  const { system, user } = buildRedditQueryPrompt(title, ytResult);
+  const cfg = { apiKey: settings.apiKey, model: settings.model };
+  const provider = settings.provider || 'openai';
 
-  if (rec) {
-    const comparison = extractComparisonEntities(raw);
-    if (comparison) {
-      // Pair the recommendation with whichever side of the "X vs Y" it
-      // ISN'T (so the query reads as a real comparison, matching how
-      // people actually title these Reddit threads) — falls back to just
-      // pairing both sides if we can't tell which side the rec matches.
-      const recLower = rec.toLowerCase();
-      const other = recLower.includes(comparison.left.toLowerCase().slice(0, 10))
-        ? comparison.right
-        : recLower.includes(comparison.right.toLowerCase().slice(0, 10))
-          ? comparison.left
-          : null;
-      if (other) return `${rec} vs ${other}`;
-      return `${comparison.left} vs ${comparison.right}`;
-    }
+  let outcome;
+  if (provider === 'anthropic') outcome = await callAnthropic(cfg, system, user);
+  else if (provider === 'gemini') outcome = await callGemini(cfg, system, user);
+  else outcome = await callOpenAI(cfg, system, user);
 
-    // A review-shaped title ("X Review", "X - Worth It?") pairs well with
-    // its recommendation as a comparison-style query, same pattern as
-    // above — this used to be gated on video_format === 'Review'; now it
-    // just tries the pattern match directly (extractReviewSubject returns
-    // null when the review-suffix pattern genuinely didn't match, so this
-    // naturally no-ops on a non-review title).
-    const reviewSubject = extractReviewSubject(raw);
-    if (reviewSubject && reviewSubject.toLowerCase() !== rec.toLowerCase()) {
-      return `${rec} vs ${reviewSubject}`;
-    }
-
-    if (isProseRecommendation(rec)) {
-      // Long free-text sentence with reasoning attached ("Learn both:
-      // build foundational coding skills first, then layer AI tooling on
-      // top...") — sending this verbatim to Reddit returns nothing.
-      // Confirmed: both real Reddit searches logged so far were exactly
-      // this shape (21-25 significant words, prose punctuation) and both
-      // came back "Insufficient Reddit Evidence". The recommendation text
-      // is still the best source of the actual topic — it just needs to
-      // be reduced to a search-shaped phrase, same extraction used
-      // everywhere else, rather than sent as a sentence.
-      const recKeywords = extractKeywords(rec, 5);
-      if (recKeywords) return recKeywords;
-      // extractKeywords found nothing usable in the rec text (e.g.
-      // all-stopword edge case) — fall through past this whole `if (rec)`
-      // block into the title-keyword path below, rather than ever
-      // sending prose verbatim.
-    } else if (significantWordCount(rec) >= 3) {
-      // Specific enough to stand alone (e.g. "disable nvidia overlay").
-      return rec;
-    } else {
-      // Short/generic recommendation — anchor it with ONE distinctive
-      // keyword from the title for context, per the "restart" -> "restart
-      // router" finding. pickDistinctiveKeyword can return null (title has
-      // nothing usable); rec alone is still a reasonable query in that case.
-      const keyword = pickDistinctiveKeyword(raw, rec);
-      return keyword ? `${rec} ${keyword}` : rec;
-    }
+  const query = typeof outcome.result?.query === 'string' ? outcome.result.query.trim() : '';
+  if (!query) {
+    throw new Error('The model did not return a usable Reddit search query.');
   }
-
-  // No recommendation to anchor on — build the query from extracted
-  // KEYWORDS, never the raw/lightly-cleaned full title. A "vs" title
-  // still gets the clean comparison-entity extraction (that's a title
-  // pattern, not a keyword-extraction fallback), otherwise we pull the
-  // most distinctive terms out of the title.
-  const comparisonOnly = extractComparisonEntities(raw);
-  if (comparisonOnly) return `${comparisonOnly.left} vs ${comparisonOnly.right}`;
-  const keywords = extractKeywords(raw, 5);
-  return keywords || raw.trim(); // last-resort: only use the full title if even keyword extraction found nothing usable
+  return { query: query.length > 180 ? query.slice(0, 180) : query, usage: outcome.usage };
 }
 
-// Fallback query used when the primary query above returns zero results —
-// a WIDER keyword extraction (more terms kept) rather than the raw/
-// lightly-cleaned full title, so a genuinely unusual title still gets a
-// real second attempt built from its own distinctive words instead of
-// reverting to title-search behavior.
+// Fallback query used when the primary (LLM-chosen) query returns zero
+// results — a plain keyword extraction from the title, so a genuinely
+// unusual topic still gets a real second attempt rather than giving up
+// after one search. This is NOT used when the LLM call itself fails (see
+// buildRedditQueryWithLLM above) — only when it succeeded but the query it
+// picked happened to return nothing on Reddit.
 function buildFallbackRedditQuery(title) {
   const keywords = extractKeywords(title, 8);
   if (keywords) return keywords;
@@ -1321,8 +1323,7 @@ async function fetchThreadTopComments(thread, limit) {
   return out;
 }
 
-async function gatherRedditEvidence(title, ytResult) {
-  const query = buildRedditQuery(title, ytResult);
+async function gatherRedditEvidence(title, query) {
   let threads = await searchReddit(query, 8);
   let usedQuery = query;
 
@@ -1403,12 +1404,52 @@ async function validateWithReddit(meta) {
     throw new Error('No API key set. Open the extension options to add one.');
   }
   requireModel(settings);
-  checkRedditCooldown(meta.videoId);
 
   const { title, ytResult } = meta;
   if (!ytResult) throw new Error('No existing analysis to validate — rate the claim first.');
 
-  const evidence = await gatherRedditEvidence(title, ytResult);
+  // Defense-in-depth: the popup already hides the "Check against Reddit"
+  // button unless ytResult.top_recommendation exists AND video_format is
+  // one the model is actually asked to fill it in for (see popup.js —
+  // hasRecommendation / FORMATS_WITH_RECOMMENDATION), since with no crowd
+  // pick there's nothing specific to search for or corroborate. That's a
+  // UI-layer gate only though — a stray/replayed VALIDATE_WITH_REDDIT
+  // message, OR the model disobeying its own "top_recommendation = null,
+  // not applicable" instruction for an ineligible format, would otherwise
+  // still slip through and burn a paid query-builder LLM call with nothing
+  // legitimate to anchor the search on. Enforce the same two-part rule
+  // here, server-side. Checked before the cooldown below since this is a
+  // structural input problem, not a rate-limiting concern — it shouldn't
+  // consume a cooldown slot.
+  const hasUsableRecommendation =
+    ytResult.top_recommendation &&
+    String(ytResult.top_recommendation).trim() &&
+    FORMATS_WITH_RECOMMENDATION.has(ytResult.video_format);
+  if (!hasUsableRecommendation) {
+    throw new Error('No crowd pick to check — Reddit validation requires a top_recommendation from the existing analysis.');
+  }
+
+  checkRedditCooldown(meta.videoId);
+
+  // Step 1: ask the model for the Reddit search query itself (see
+  // buildRedditQueryWithLLM above). A failure here means no query was ever
+  // produced — nothing to gather evidence for — so it propagates as an
+  // error rather than degrading to "Insufficient Reddit Evidence", and
+  // records a failure timestamp so a rapid retry doesn't immediately fire
+  // another paid call at the same likely-to-fail request.
+  let queryOutcome;
+  try {
+    queryOutcome = await buildRedditQueryWithLLM(title, ytResult, settings);
+  } catch (err) {
+    recordRedditQueryFailure(meta.videoId);
+    throw new Error(`Could not determine a Reddit search query: ${err.message || err}`);
+  }
+  clearRedditQueryFailure(meta.videoId);
+
+  const evidence = await gatherRedditEvidence(title, queryOutcome.query);
+  const pricing = await getPricing(settings.provider || 'openai');
+  const queryCostUSD = estimateCost(queryOutcome.usage, pricing);
+
   if (!evidence.threads.length) {
     const empty = {
       reddit_verdict: 'Insufficient Reddit Evidence',
@@ -1417,8 +1458,8 @@ async function validateWithReddit(meta) {
       citations: [],
       query: evidence.query,
       threadsSearched: 0,
-      tokenUsage: null,
-      estCostUSD: 0
+      tokenUsage: queryOutcome.usage,
+      estCostUSD: queryCostUSD
     };
     await saveRedditToCache(meta.videoId, empty);
     return empty;
@@ -1434,8 +1475,15 @@ async function validateWithReddit(meta) {
   else outcome = await callOpenAI(cfg, system, user);
 
   const r = outcome.result || {};
-  const pricing = await getPricing(provider);
-  const estCostUSD = estimateCost(outcome.usage, pricing);
+  // Combined usage/cost across BOTH LLM calls (query-builder + evidence
+  // synthesis) — the popup and log should reflect the true total spend for
+  // one "Check against Reddit" click, not just the second call's cost.
+  const combinedUsage = {
+    promptTokens: (queryOutcome.usage.promptTokens || 0) + (outcome.usage.promptTokens || 0),
+    completionTokens: (queryOutcome.usage.completionTokens || 0) + (outcome.usage.completionTokens || 0),
+    totalTokens: (queryOutcome.usage.totalTokens || 0) + (outcome.usage.totalTokens || 0)
+  };
+  const estCostUSD = queryCostUSD + estimateCost(outcome.usage, pricing);
 
   // Resolve citations against the threads we actually fetched — never trust
   // a model-generated URL, only a thread_index pointing back into evidence
@@ -1465,7 +1513,7 @@ async function validateWithReddit(meta) {
     citations,
     query: evidence.query,
     threadsSearched: evidence.threads.length,
-    tokenUsage: outcome.usage,
+    tokenUsage: combinedUsage,
     estCostUSD
   };
 
@@ -1479,9 +1527,9 @@ async function validateWithReddit(meta) {
     title,
     query: evidence.query,
     threadsSearched: evidence.threads.length,
-    promptTokens: outcome.usage.promptTokens,
-    completionTokens: outcome.usage.completionTokens,
-    totalTokens: outcome.usage.totalTokens,
+    promptTokens: combinedUsage.promptTokens,
+    completionTokens: combinedUsage.completionTokens,
+    totalTokens: combinedUsage.totalTokens,
     estCostUSD,
     redditVerdict: result.reddit_verdict,
     redditRecommendation: result.reddit_recommendation

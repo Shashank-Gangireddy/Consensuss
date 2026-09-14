@@ -181,7 +181,7 @@ function detailRowHtml(entry) {
 
   return `
     <td></td>
-    <td colspan="8">
+    <td colspan="7">
       <div class="detail-grid">
         <span>${model}</span>
         <span>${escapeHtml(usage)}</span>
@@ -239,19 +239,11 @@ function renderTable() {
       <td>${escapeHtml(entry.contentCategory || '-')}</td>
       <td>${resultCell(entry)}</td>
       <td class="insight-cell">${insightCell(entry)}</td>
-      <td>
-        <div class="thumbs">
-          <button class="thumb-up ${entry.helpful === true ? 'active-up' : ''}" title="Rating was accurate">👍</button>
-          <button class="thumb-down ${entry.helpful === false ? 'active-down' : ''}" title="Rating was off">👎</button>
-        </div>
-      </td>
       <td><textarea class="notes-input" placeholder="e.g. missed sarcasm in comment #4...">${escapeHtml(entry.note || '')}</textarea></td>
       <td>${redoCell}</td>
       <td><button class="delete-btn" title="Delete this entry">✕</button></td>
     `;
 
-    tr.querySelector('.thumb-up').addEventListener('click', () => setHelpful(entry.id, entry.helpful === true ? null : true));
-    tr.querySelector('.thumb-down').addEventListener('click', () => setHelpful(entry.id, entry.helpful === false ? null : false));
     tr.querySelector('.notes-input').addEventListener('change', e => setNote(entry.id, e.target.value));
     tr.querySelector('.delete-btn').addEventListener('click', () => deleteEntry(entry.id));
     const redoBtn = tr.querySelector('.redo-btn');
@@ -314,14 +306,6 @@ async function setNote(id, note) {
     row.classList.add('saved-flash');
     setTimeout(() => row.classList.remove('saved-flash'), 600);
   }
-}
-
-async function setHelpful(id, val) {
-  const item = history.find(h => h.id === id);
-  if (!item) return;
-  item.helpful = val;
-  await saveHistory();
-  render();
 }
 
 async function deleteEntry(id) {
@@ -522,7 +506,10 @@ function render() {
 }
 
 // ---------------------------------------------------------------------
-// Learned Guidance panel
+// Learned Guidance panel — collapsible: collapsed by default, showing a
+// rule-count summary pill (with a critical-rule callout if any are
+// active) so the panel's state is visible at a glance without expanding
+// it. Reviewed as a design mock (dashboard-mock.html) before landing here.
 // ---------------------------------------------------------------------
 
 let guidanceRules = [];
@@ -532,7 +519,20 @@ function fmtRelDate(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function renderGuidanceSummary() {
+  const active = guidanceRules.filter(g => g.active !== false).length;
+  const critical = guidanceRules.filter(g => g.severity === 'critical' && g.active !== false).length;
+  const total = guidanceRules.length;
+  const pill = $('guidanceSummaryPill');
+  if (!total) {
+    pill.innerHTML = 'No rules yet';
+    return;
+  }
+  pill.innerHTML = `${active} active rule${active === 1 ? '' : 's'}${total !== active ? ` · ${total - active} off` : ''}${critical ? ` <span class="dot-critical"></span> ${critical} critical` : ''}`;
+}
+
 function renderGuidance() {
+  renderGuidanceSummary();
   const list = $('guidanceList');
   list.innerHTML = '';
   const sorted = [...guidanceRules].sort((a, b) => b.createdAt - a.createdAt);
@@ -639,6 +639,15 @@ $('insightModalOverlay').addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeInsightModal();
 });
+
+// Guidance panel collapse/expand — clicking anywhere in the header toggles
+// it, except the Export/Import buttons which stop propagation so they
+// don't also toggle the panel when clicked.
+$('guidanceHeader').addEventListener('click', () => {
+  $('guidanceWrap').classList.toggle('collapsed');
+});
+$('exportGuidanceBtn').addEventListener('click', e => e.stopPropagation());
+$('importGuidanceBtn').addEventListener('click', e => e.stopPropagation());
 
 async function init() {
   const { history: h, redditLog: rl } = await chrome.storage.local.get(['history', 'redditLog']);

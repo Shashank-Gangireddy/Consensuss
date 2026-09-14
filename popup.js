@@ -215,7 +215,17 @@ function renderConsensusResult(state) {
   // that produces a vague/unfocused validation — hide it entirely rather
   // than show a CTA with no real action behind it. Hide it while busy too,
   // so a rapid double click can't fire two concurrent (paid) validations.
-  const hasRecommendation = !!r.top_recommendation;
+  //
+  // Gated the SAME way the crowd-pick box above is (top_recommendation
+  // present AND video_format is one FORMATS_WITH_RECOMMENDATION actually
+  // asks the model to fill in) — not just a truthy top_recommendation
+  // check. Some video_formats (Explainer/Concept, Outcome/Result Claim,
+  // News/Commentary, etc.) are BY DESIGN never supposed to have a
+  // top_recommendation; if the model disobeys that and returns one anyway,
+  // the crowd-pick box correctly stays hidden (see above), but a bare
+  // truthy check here would still show the Reddit button with nothing
+  // legitimate backing it — exactly the "CTA with no real trigger" bug.
+  const hasRecommendation = !!r.top_recommendation && FORMATS_WITH_RECOMMENDATION.has(r.video_format);
   const redditBusy = redditState.status === 'validating';
 
   if (hasRecommendation) {
@@ -224,7 +234,7 @@ function renderConsensusResult(state) {
     $('redditBtn').textContent = redditBusy ? 'Checking Reddit…' : 'Check against Reddit';
 
     if (redditState.status === 'validating') {
-      $('redditStatus').textContent = 'Searching Reddit and reading top threads…';
+      $('redditStatus').textContent = 'Working out the best Reddit search, then reading top threads…';
     } else if (redditState.status === 'error') {
       $('redditStatus').textContent = 'Reddit check failed: ' + (redditState.error || 'unknown error');
     } else {

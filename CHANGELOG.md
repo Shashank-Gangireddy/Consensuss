@@ -4,6 +4,49 @@ All notable changes to the Consensus extension are logged here. Bump the
 version in `manifest.json` alongside every entry — the Chrome Web Store
 rejects a re-upload with an unchanged version number.
 
+## [3.8.4] - 2026-09-14
+- **Reddit search-query builder is now LLM-driven instead of heuristic.**
+  Replaces the old regex/keyword-extraction `buildRedditQuery()` with a
+  dedicated small LLM call (`buildRedditQueryWithLLM`) that takes the
+  video title + crowd top_recommendation and returns the search query
+  directly, run before the Reddit search itself.
+  - New failure-cooldown (`REDDIT_QUERY_FAILURE_COOLDOWN_MS`, 30s),
+    separate from the normal per-video debounce, so a failed query-builder
+    call doesn't get immediately retried and burn another paid call.
+  - Server-side gate in `validateWithReddit`: Reddit validation now
+    requires a *usable* top_recommendation on a format actually eligible
+    for one (`FORMATS_WITH_RECOMMENDATION`), not just any truthy
+    top_recommendation — mirrors the same gating the popup CTA already
+    used, closing a path where a stray message or a model disobeying its
+    own "top_recommendation = null" instruction could still fire a paid
+    query-builder call with nothing to anchor on.
+  - Combined token usage/cost across both LLM calls (query-builder +
+    evidence synthesis) is now what's shown/logged for one "Check against
+    Reddit" click, not just the second call's cost.
+  - popup.js: the "Check against Reddit" CTA is gated the same way,
+    and its in-progress status line now reads "Working out the best
+    Reddit search, then reading top threads…".
+  - content.js: `scrollBackToVideo()` is now self-verifying — polls
+    `scrollY` after the smooth scroll and forces an instant scroll as a
+    fallback if it hasn't actually landed within 2s, instead of a
+    fire-and-forget smooth scroll that could silently stop partway.
+  - Manual smoke test: `test/manual-reddit-llm-query.js` (not part of
+    `npm test`) covers the happy path, a query-builder failure + its
+    retry cooldown, and the two "no usable recommendation" rejection
+    paths.
+- **Dashboard: Learned Guidance panel is now collapsible**, collapsed by
+  default with a rule-count summary pill ("N active rules · M off ·
+  K critical") visible while collapsed, reviewed first as a design mock
+  (`dashboard-mock.html`) before landing in `dashboard.html`/`.css`/`.js`.
+- **Dashboard: removed the "Accurate?" thumbs-up/down column** from the
+  history table — untracked field with no wiring beyond storing the
+  value; cut for a cleaner table with tighter column count.
+- **Website mockups added** (`design-mockup/minimal-home.html`,
+  `design-mockup/minimal-security.html`): a minimalist one-page layout
+  for the public site (instinct.com-style plain typographic layout, Work
+  Sans font matching manassaloi.com) collapsing the current Setup section
+  into a short bullet list and moving Security to its own page.
+
 ## [3.8.3] - 2026-09-12
 - **Popup UI cleanup: consistent spacing and clearer top-to-bottom
   information flow**, reviewed and iterated as a design mockup

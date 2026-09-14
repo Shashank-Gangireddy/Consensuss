@@ -4,6 +4,37 @@ All notable changes to the Consensus extension are logged here. Bump the
 version in `manifest.json` alongside every entry — the Chrome Web Store
 rejects a re-upload with an unchanged version number.
 
+## [3.9.0] - 2026-09-14
+- **Minimalist UI redesign across all three extension surfaces**
+  (popup, dashboard, settings), replacing the dark mint/amber/red
+  card-based theme with a white/black, Work Sans, no-cards/gradients/
+  pills language matching the website's 2026-09-14 redesign. Popup and
+  dashboard follow `design-mockup/popup-minimalist.html` and
+  `dashboard-minimalist.html`; settings has no dedicated mockup and
+  follows the same design system.
+  - Every colored "box" (critical flag, guidance enforcement,
+    recommendation, reddit) is now a heading + paragraph separated by a
+    thin top rule instead of a colored rounded card. The rating hero's
+    number/verdict text stays colored by score (soft red/amber/green) —
+    the one place color still carries meaning.
+  - Dashboard reordered: compact single-line usage-stats row → Learned
+    Guidance as a full-width hero (pointer-marker rules, tags in a
+    right-hand column, own internal scroll past ~3 rules) → Analysis
+    history pulled to the bottom (own internal scroll past ~8 rows).
+    Replaces the old 5-card stat grid + collapsible guidance panel.
+  - New dark-mode toggle (sun/moon button) on all three pages, a literal
+    color inversion of the same skin, persisted to
+    `chrome.storage.local.uiDarkMode` and shared across popup/dashboard/
+    settings so the choice carries over between them.
+  - Self-hosted Work Sans variable font added under `fonts/` (the
+    Google Fonts CDN used in the design mockups can't load inside the
+    actual extension pages under the `default-src 'self'` CSP).
+  - No logic changes: every element id/class `popup.js`/`dashboard.js`/
+    `options.js` depend on is unchanged; settings' status-line inline
+    `style.color` assignments were replaced with CSS classes
+    (`status-ok`/`status-err`/`status-progress`) so dark mode inverts
+    them correctly, with no behavior change.
+
 ## [3.8.4] - 2026-09-14
 - **Reddit search-query builder is now LLM-driven instead of heuristic.**
   Replaces the old regex/keyword-extraction `buildRedditQuery()` with a

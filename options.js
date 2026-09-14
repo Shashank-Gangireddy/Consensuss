@@ -9,7 +9,8 @@ const DEFAULT_PRICING = {
 };
 
 async function load() {
-  const { settings } = await chrome.storage.local.get('settings');
+  const { settings, uiDarkMode } = await chrome.storage.local.get(['settings', 'uiDarkMode']);
+  applyMode(!!uiDarkMode);
   const s = settings || {};
   $('provider').value = s.provider || 'openai';
   $('apiKey').value = s.apiKey || '';
@@ -36,7 +37,7 @@ $('saveBtn').addEventListener('click', async () => {
   const model = $('model').value.trim();
   if (!model) {
     $('status').textContent = 'Enter or fetch a model first — there is no default.';
-    $('status').style.color = '#a11212';
+    $('status').className = 'muted status-err';
     $('model').focus();
     return;
   }
@@ -53,7 +54,7 @@ $('saveBtn').addEventListener('click', async () => {
     }
   };
   await chrome.storage.local.set({ settings });
-  $('status').style.color = '';
+  $('status').className = 'muted status-ok';
   $('status').textContent = 'Saved.';
   setTimeout(() => ($('status').textContent = ''), 2000);
 });
@@ -61,6 +62,23 @@ $('saveBtn').addEventListener('click', async () => {
 $('dashboardBtn').addEventListener('click', () =>
   chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') })
 );
+
+// Dark mode toggle — mirrors popup.js/dashboard.js's toggle, sharing the
+// same chrome.storage.local 'uiDarkMode' key so the choice carries over
+// across all three extension surfaces.
+function applyMode(isDark) {
+  document.body.classList.toggle('dark', isDark);
+  const btn = $('modeToggleBtn');
+  btn.innerHTML = isDark ? '&#9790;' : '&#9728;';
+  btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  btn.setAttribute('aria-label', btn.title);
+}
+
+$('modeToggleBtn').addEventListener('click', async () => {
+  const isDark = !document.body.classList.contains('dark');
+  applyMode(isDark);
+  await chrome.storage.local.set({ uiDarkMode: isDark });
+});
 
 async function fetchModels(provider, apiKey) {
   if (!apiKey) throw new Error('Enter an API key first.');
@@ -111,7 +129,7 @@ $('fetchModelsBtn').addEventListener('click', async () => {
   const statusEl = $('modelFetchStatus');
   $('fetchModelsBtn').disabled = true;
   statusEl.textContent = 'Fetching…';
-  statusEl.style.color = '#666';
+  statusEl.className = 'note status-progress';
   try {
     const models = await fetchModels(provider, apiKey);
     const list = $('modelList');
@@ -124,10 +142,10 @@ $('fetchModelsBtn').addEventListener('click', async () => {
     statusEl.textContent = models.length
       ? `Found ${models.length} models — start typing in the field above to see suggestions, or pick one.`
       : 'No models returned for this key.';
-    statusEl.style.color = '#0b7a2b';
+    statusEl.className = 'note status-ok';
   } catch (e) {
     statusEl.textContent = 'Failed: ' + e.message;
-    statusEl.style.color = '#a11212';
+    statusEl.className = 'note status-err';
   }
   $('fetchModelsBtn').disabled = false;
 });
@@ -146,19 +164,19 @@ $('testKeyBtn').addEventListener('click', async () => {
   const statusEl = $('testKeyStatus');
   if (!apiKey) {
     statusEl.textContent = 'Enter an API key first.';
-    statusEl.style.color = '#a11212';
+    statusEl.className = 'note status-err';
     return;
   }
   $('testKeyBtn').disabled = true;
   statusEl.textContent = 'Testing…';
-  statusEl.style.color = '#666';
+  statusEl.className = 'note status-progress';
   try {
     const models = await fetchModels(provider, apiKey);
     statusEl.textContent = `✓ Key is valid for ${provider} — ${models.length} model(s) visible to this key.`;
-    statusEl.style.color = '#0b7a2b';
+    statusEl.className = 'note status-ok';
   } catch (e) {
     statusEl.textContent = `✗ Key test failed: ${e.message}`;
-    statusEl.style.color = '#a11212';
+    statusEl.className = 'note status-err';
   }
   $('testKeyBtn').disabled = false;
 });

@@ -17,6 +17,28 @@
   src: url("fonts/BricolageGrotesque-800.woff2") format("woff2");
 }
 
+/* Work Sans — self-hosted (variable font) for the 2026-09-14 minimalist
+   popup/dashboard redesign. Self-hosted rather than the Google Fonts CDN
+   link used in the design-mockup/*.html previews: the extension_pages CSP
+   is `default-src 'self'`, which blocks fonts.googleapis.com/gstatic.com
+   in the actual popup.html/dashboard.html (the mockups only load fine
+   standalone, outside the extension's CSP). Variable font covers 100-900
+   in one file; the italic file only ships italic. */
+@font-face {
+  font-family: "Work Sans";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/WorkSans-Variable.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Work Sans";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/WorkSans-Italic-Variable.woff2") format("woff2-variations");
+}
+
 :root {
   --bg: #0d0d0d;
   --card-bg: #141414;
@@ -45,6 +67,10 @@
 
   --font-display: "Bricolage Grotesque", "Inter", "Segoe UI", sans-serif;
   --font-body: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  /* Work Sans stack for the minimalist popup/dashboard skin — kept as its
+     own token rather than repointing --font-body, since content.css's
+     on-page badge and options.css keep the original Inter-based look. */
+  --font-ui: "Work Sans", -apple-system, "Segoe UI", sans-serif;
 }
 
 /* Rating/lean state colors — single scale used everywhere a 1-10 rating or

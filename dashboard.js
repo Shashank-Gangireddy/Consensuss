@@ -22,6 +22,8 @@ function ratingClass(r) {
   return 'rating-bad';
 }
 
+// Single compact inline row (was a 5-card grid) — same numbers, quieter
+// presentation, matching design-mockup/dashboard-minimalist.html.
 function renderCards() {
   const n = history.length;
   // Vibes-path entries (path==='vibes') have rating/verdict as null by
@@ -38,13 +40,14 @@ function renderCards() {
   const totalCostAll = totalCost + redditCost;
   const vibesCount = n - consensusEntries.length;
 
-  $('cards').innerHTML = `
-    <div class="card"><div class="label">Analyses</div><div class="value">${n}${vibesCount ? ` <span class="muted" style="font-size:12px">(${consensusEntries.length} rated, ${vibesCount} vibes)</span>` : ''}</div></div>
-    <div class="card"><div class="label">Total Tokens</div><div class="value">${totalTokens.toLocaleString()}</div></div>
-    <div class="card"><div class="label">Total Est. Cost</div><div class="value">${fmtCost(totalCostAll)}</div></div>
-    <div class="card"><div class="label">Avg / Analysis</div><div class="value">${avgTokens.toLocaleString()} tok · ${fmtCost(avgCost)}</div></div>
-    <div class="card"><div class="label">Reddit Checks</div><div class="value">${redditLog.length} · ${fmtCost(redditCost)}</div></div>
-  `;
+  const sep = '<span class="stat-sep">&middot;</span>';
+  $('statsRow').innerHTML = [
+    `<span class="stat"><b>${n}</b> analyses${vibesCount ? ` <span class="stat-note">(${consensusEntries.length} rated, ${vibesCount} vibes)</span>` : ''}</span>`,
+    `<span class="stat"><b>${totalTokens.toLocaleString()}</b> tokens</span>`,
+    `<span class="stat"><b>${fmtCost(totalCostAll)}</b> total est. cost</span>`,
+    `<span class="stat"><b>${avgTokens.toLocaleString()}</b> tok / <b>${fmtCost(avgCost)}</b> avg</span>`,
+    `<span class="stat"><b>${redditLog.length}</b> reddit checks <span class="stat-note">(${fmtCost(redditCost)})</span></span>`
+  ].join(sep);
 }
 
 // ---------------------------------------------------------------------
@@ -506,10 +509,11 @@ function render() {
 }
 
 // ---------------------------------------------------------------------
-// Learned Guidance panel — collapsible: collapsed by default, showing a
-// rule-count summary pill (with a critical-rule callout if any are
-// active) so the panel's state is visible at a glance without expanding
-// it. Reviewed as a design mock (dashboard-mock.html) before landing here.
+// Learned Guidance panel — full-width hero section (not collapsible in
+// this layout; the panel's own internal scroll, see .guidance-scroll in
+// dashboard.css, keeps a long rule list from growing the page). Each rule
+// gets a pointer marker (▸) and its tags in a right-hand column, matching
+// design-mockup/dashboard-minimalist.html.
 // ---------------------------------------------------------------------
 
 let guidanceRules = [];
@@ -519,20 +523,7 @@ function fmtRelDate(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function renderGuidanceSummary() {
-  const active = guidanceRules.filter(g => g.active !== false).length;
-  const critical = guidanceRules.filter(g => g.severity === 'critical' && g.active !== false).length;
-  const total = guidanceRules.length;
-  const pill = $('guidanceSummaryPill');
-  if (!total) {
-    pill.innerHTML = 'No rules yet';
-    return;
-  }
-  pill.innerHTML = `${active} active rule${active === 1 ? '' : 's'}${total !== active ? ` · ${total - active} off` : ''}${critical ? ` <span class="dot-critical"></span> ${critical} critical` : ''}`;
-}
-
 function renderGuidance() {
-  renderGuidanceSummary();
   const list = $('guidanceList');
   list.innerHTML = '';
   const sorted = [...guidanceRules].sort((a, b) => b.createdAt - a.createdAt);
@@ -543,23 +534,26 @@ function renderGuidance() {
     li.className = 'guidance-item' + (g.active === false ? ' inactive' : '');
     li.dataset.id = g.id;
 
-    const scopeLabel = g.scope && g.scope !== 'global' ? g.scope : 'All videos';
+    const scopeLabel = g.scope && g.scope !== 'global' ? g.scope : 'All categories';
     const appliedLabel = g.timesApplied ? `Applied ${g.timesApplied}x` : 'Not applied yet';
     const sourceLabel = g.sourceVideoTitle ? `From: "${g.sourceVideoTitle}"` : '';
     const isCritical = g.severity === 'critical';
 
     li.innerHTML = `
-      <input type="checkbox" class="g-toggle" ${g.active !== false ? 'checked' : ''} title="Active — applied to future analyses" />
-      <div class="g-body">
-        <div class="g-rule" contenteditable="true" spellcheck="false">${escapeHtml(g.rule)}</div>
-        <div class="g-meta">
-          ${isCritical ? '<span class="g-severity-critical" title="Creator genuineness/trust rule — can force a low rating">CRITICAL</span>' : ''}
-          <span class="g-scope">${escapeHtml(scopeLabel)}</span>
-          ${appliedLabel} · Learned ${fmtRelDate(g.createdAt)}${sourceLabel ? ' · ' + escapeHtml(sourceLabel) : ''}
+      <div class="g-left">
+        <span class="g-pointer">&#9656;</span>
+        <div class="g-body">
+          <p class="g-rule" contenteditable="true" spellcheck="false">${escapeHtml(g.rule)}</p>
+          <p class="g-meta">${appliedLabel} &middot; Learned ${fmtRelDate(g.createdAt)}${sourceLabel ? ' &middot; ' + escapeHtml(sourceLabel) : ''}</p>
         </div>
       </div>
+      <div class="g-tags">
+        ${isCritical ? '<span class="g-tag g-tag-critical">Critical</span>' : ''}
+        <span class="g-tag">${escapeHtml(scopeLabel)}</span>
+      </div>
       <div class="g-actions">
-        <button class="g-delete" title="Delete this rule">✕</button>
+        <input type="checkbox" class="g-toggle" ${g.active !== false ? 'checked' : ''} title="Active — applied to future analyses" />
+        <button class="g-delete" title="Delete this rule">&#10005;</button>
       </div>
     `;
 
@@ -640,19 +634,32 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeInsightModal();
 });
 
-// Guidance panel collapse/expand — clicking anywhere in the header toggles
-// it, except the Export/Import buttons which stop propagation so they
-// don't also toggle the panel when clicked.
-$('guidanceHeader').addEventListener('click', () => {
-  $('guidanceWrap').classList.toggle('collapsed');
+// Guidance panel export/import buttons no longer sit inside a collapsible
+// header (see guidance-title-row in dashboard.html) — no stopPropagation
+// needed, but the button click handlers themselves are unchanged above.
+
+// Dark mode toggle — mirrors popup.js's toggle, sharing the same
+// chrome.storage.local 'uiDarkMode' key so the choice carries over
+// between the popup and this dashboard tab.
+function applyMode(isDark) {
+  document.body.classList.toggle('dark', isDark);
+  const btn = $('modeToggleBtn');
+  btn.innerHTML = isDark ? '&#9790;' : '&#9728;';
+  btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  btn.setAttribute('aria-label', btn.title);
+}
+
+$('modeToggleBtn').addEventListener('click', async () => {
+  const isDark = !document.body.classList.contains('dark');
+  applyMode(isDark);
+  await chrome.storage.local.set({ uiDarkMode: isDark });
 });
-$('exportGuidanceBtn').addEventListener('click', e => e.stopPropagation());
-$('importGuidanceBtn').addEventListener('click', e => e.stopPropagation());
 
 async function init() {
-  const { history: h, redditLog: rl } = await chrome.storage.local.get(['history', 'redditLog']);
+  const { history: h, redditLog: rl, uiDarkMode } = await chrome.storage.local.get(['history', 'redditLog', 'uiDarkMode']);
   history = Array.isArray(h) ? h : [];
   redditLog = Array.isArray(rl) ? rl : [];
+  applyMode(!!uiDarkMode);
   await loadGuidance();
   render();
 }

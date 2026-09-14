@@ -10,55 +10,59 @@
   <div class="wrap">
     <header>
       <h1>Consensus — Dashboard</h1>
-      <div class="actions">
-        <button id="exportBtn">Export CSV</button>
-        <button id="exportJsonBtn">Export JSON</button>
-        <button id="clearBtn" class="danger">Clear All</button>
+      <div class="header-right">
+        <span class="header-links">
+          <button id="exportBtn" class="link-btn">Export CSV</button>
+          <button id="exportJsonBtn" class="link-btn">Export JSON</button>
+          <button id="clearBtn" class="link-btn danger-link">Clear All</button>
+        </span>
+        <button id="modeToggleBtn" class="mode-toggle" title="Switch to dark mode" aria-label="Switch to dark mode">&#9728;</button>
       </div>
     </header>
 
-    <section class="cards" id="cards"></section>
+    <!-- 1. Usage stats: single compact inline row -->
+    <section class="stats-row" id="statsRow"></section>
 
-    <section class="guidance-wrap collapsed" id="guidanceWrap">
-      <div class="guidance-header" id="guidanceHeader">
-        <span class="guidance-caret">▾</span>
-        <div class="guidance-title-group">
-          <h2>Learned Guidance</h2>
-          <span class="muted-sub">Standing rules distilled from your corrections — applied to every future analysis.</span>
-          <span class="guidance-summary-pill" id="guidanceSummaryPill"></span>
+    <!-- 2. Learned Guidance: full-width hero -->
+    <section class="guidance-section">
+      <div class="guidance-title-row">
+        <div>
+          <h2 class="hero-heading">Learned Guidance</h2>
+          <p class="hero-sub">Standing rules distilled from your corrections — applied to every future analysis.</p>
         </div>
-        <span class="guidance-header-actions">
-          <button id="exportGuidanceBtn">Export Guidance</button>
-          <button id="importGuidanceBtn">Import Guidance</button>
+        <span class="guidance-actions">
+          <button id="exportGuidanceBtn" class="link-btn">Export Guidance</button><span class="sep">|</span><button id="importGuidanceBtn" class="link-btn">Import Guidance</button>
           <input id="importGuidanceFile" type="file" accept="application/json" class="hidden" />
         </span>
       </div>
-      <div class="guidance-body">
-        <p id="importGuidanceStatus" class="muted guidance-import-status hidden"></p>
-        <div id="guidanceEmpty" class="hidden muted guidance-empty">
-          No learned rules yet. Use "Redo w/ note" on an analysis to teach the rater something new.
-        </div>
-        <ul id="guidanceList" class="guidance-list"></ul>
+      <p id="importGuidanceStatus" class="muted guidance-import-status hidden"></p>
+      <div id="guidanceEmpty" class="hidden muted guidance-empty">
+        No learned rules yet. Use "Redo w/ note" on an analysis to teach the rater something new.
       </div>
+      <ul id="guidanceList" class="guidance-list guidance-scroll"></ul>
     </section>
 
-    <section class="table-wrap">
-      <table id="historyTable">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Date</th>
-            <th>Video</th>
-            <th>Category</th>
-            <th>Result</th>
-            <th>Insight</th>
-            <th>Your Notes</th>
-            <th>Redo</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="historyBody"></tbody>
-      </table>
+    <!-- 3. Analysis history: pulled to the bottom, own scroll container -->
+    <section class="history-section">
+      <h3 class="table-heading">Analysis history</h3>
+      <div class="table-scroll">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Date</th>
+              <th>Video</th>
+              <th>Category</th>
+              <th>Result</th>
+              <th>Insight</th>
+              <th>Your Notes</th>
+              <th>Redo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
       <p id="emptyState" class="hidden muted">No analyses logged yet. Rate a video, then refresh this page.</p>
     </section>
   </div>

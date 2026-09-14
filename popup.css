@@ -1,115 +1,156 @@
+/* popup.css — minimalist direction (2026-09-14 redesign): white/black,
+   Work Sans, no cards/gradients/pills/shadows. Every "box" that used to be
+   a colored rounded card is now a heading + paragraph separated by a thin
+   top rule. Color is used sparingly: the rating hero (by score) and three
+   section labels (adjust/authenticity/recommend). Dark mode is a literal
+   color inversion of the same skin, toggled via body.dark — see
+   themeToggleBtn wiring in popup.js. Element ids/classes below are
+   unchanged from the previous theme so popup.js needs no changes. */
+
 body {
+  --bg: #ffffff;
+  --fg: #000000;
+  --border-strong: #000000;
+  --border-soft: #cccccc;
+  --muted: #555555;
+  --body-text: #222222;
+  --link: #0000EE;
+  --red: #c0392b;
+  --amber: #b8860b;
+  --green: #1e7d32;
+
   width: 360px;
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 13px;
-  color: var(--text-hi);
+  line-height: 20px;
+  color: var(--fg);
   background: var(--bg);
   margin: 0;
   padding: 18px;
+}
+
+body.dark {
+  --bg: #000000;
+  --fg: #ffffff;
+  --border-strong: #ffffff;
+  --border-soft: #3a3a3a;
+  --muted: #aaaaaa;
+  --body-text: #dddddd;
+  --link: #6d8dff;
+  --red: #ff6b57;
+  --amber: #f0c04e;
+  --green: #4fd67d;
 }
 
 header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-strong);
 }
 
 h1 {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 600;
   letter-spacing: -0.01em;
   margin: 0;
-  color: var(--text-hi);
+  color: var(--fg);
 }
 
 .header-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 10px;
 }
 
-#settingsBtn, #dashboardBtn {
+.header-links {
+  font-size: 12.5px;
+}
+
+.link-btn {
   border: none;
-  background: var(--card-bg-2);
-  color: var(--text-mid);
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  font-size: 14px;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--link);
+  text-decoration: underline;
   cursor: pointer;
 }
 
-#settingsBtn:hover, #dashboardBtn:hover {
-  color: var(--text-hi);
+.header-links .sep {
+  color: var(--fg);
+  margin: 0 6px;
+}
+
+.mode-toggle {
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+#notYoutube {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--body-text);
+}
+
+#notYoutube code {
+  background: var(--border-soft);
+  padding: 1px 5px;
 }
 
 .hidden {
   display: none !important;
 }
 
-/* Shared spacing scale — every block-to-block gap below is one of these
-   five values instead of the previous ad-hoc 4/6/8/10/12/14px mix. */
-:root {
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: 12px;
-  --sp-4: 16px;
-}
-
 .video-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 20px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  margin: 6px 0 14px;
-  color: var(--text-hi);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-button {
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--card-bg-2);
-  color: var(--text-hi);
-  cursor: pointer;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
-  font-family: var(--font-body);
+  line-height: 1.35;
+  margin: 0 0 14px;
+  color: var(--fg);
 }
 
 button.primary {
   width: 100%;
-  background: var(--mint);
-  color: var(--mint-text);
+  background: var(--fg);
+  color: var(--bg);
   border: none;
-  padding: 12px 14px;
-  font-weight: 700;
-  margin-bottom: 4px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 16px;
 }
 
-button:disabled {
+button.primary:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
 .muted {
-  color: var(--text-dim);
+  color: var(--muted);
   font-size: 12px;
 }
 
 #status {
   min-height: 0;
   margin-bottom: 0;
-  color: var(--text-mid);
 }
 
 #status:not(:empty) {
@@ -117,19 +158,16 @@ button:disabled {
   margin-bottom: 8px;
 }
 
-/* Rating hero — the fork in the road for everything that follows
-   (recommendation box, reddit CTA, guidance notes all read differently
-   depending on this number/verdict), so it's sized like a headline and
-   colored by state (1-3 red / 4-6 amber / 7-10 mint) rather than being
-   just another line of text. It's also always the FIRST thing in the
-   result now — nothing (flags, guidance notes) sits above it. */
+/* Rating hero — number + verdict text carry the score color themselves
+   (soft red/amber/green), no pill/background fill. Always the first
+   thing in the result. */
 .rating-line {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  margin-bottom: var(--sp-2);
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-strong);
+  padding-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .rating-num-group {
@@ -138,87 +176,83 @@ button:disabled {
 }
 
 .rating-num {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 44px;
+  font-size: 34px;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.02em;
 }
 
 .rating-frac {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 18px;
-  opacity: 0.65;
-  margin-left: -6px;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 2px;
 }
 
-/* Verdict + Disputed badge stack on the right instead of sharing the
-   number's baseline — the badge is a qualifier ON the verdict, so it
-   sits directly under it, right-aligned. */
 .verdict-group {
   margin-left: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 2px;
 }
 
 .verdict {
-  font-weight: 800;
+  font-weight: 600;
   font-size: 14px;
   line-height: 1;
 }
 
 .contested-badge {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: #4a3c1e;
-  color: #ffdfa0;
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+  background: none;
+  padding: 0;
 }
 
-/* Eyebrow line right under the hero: category/format + judged-on, kept
-   tight to the score since they're read as one unit ("what was scored
-   and how"). Dim gray — quiet metadata, not a heading. */
+.rating-line.state-bad .rating-num,
+.rating-line.state-bad .verdict { color: var(--red); }
+.rating-line.state-mid .rating-num,
+.rating-line.state-mid .verdict { color: var(--amber); }
+.rating-line.state-good .rating-num,
+.rating-line.state-good .verdict { color: var(--green); }
+
+/* theme.css defines a shared, generic .state-good/-mid/-bad/-none badge
+   class (colored pill fill, used by the dashboard/on-page badge) that
+   #ratingHero also picks up via classList — reset its background/color
+   here so the minimalist hero stays flat (no pill fill), overridden only
+   on the number/verdict text by the rules above. */
+#ratingHero.state-good, #ratingHero.state-mid,
+#ratingHero.state-bad, #ratingHero.state-none {
+  background: transparent;
+  color: var(--fg);
+  border: none;
+}
+
 .meta-eyebrow {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 10px;
-  margin: 0 0 var(--sp-4);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
+  justify-content: space-between;
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
-.meta-eyebrow:empty {
-  display: none;
-}
+.meta-eyebrow:empty { display: none; }
+.meta-eyebrow:not(:has(> span:not(.hidden))) { display: none; }
 
-/* Collapse the eyebrow entirely (no stray margin/gap) when both
-   classification and judged-on lines are individually hidden by JS. */
-.meta-eyebrow:not(:has(> span:not(.hidden))) {
-  display: none;
-}
-
-/* Middle-dot separator between classification and judged-on, shown only
-   when both are visible (avoids a dangling dot when one is hidden). */
 .meta-eyebrow #classificationLine:not(.hidden) ~ #ratingDimLine:not(.hidden)::before {
   content: "\00b7";
   margin-right: 6px;
-  opacity: 0.6;
 }
 
 .tag-line {
   margin: 0 0 6px;
   font-size: 11px;
-  font-weight: 700;
-  color: var(--text-dim);
+  font-weight: 600;
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -226,147 +260,112 @@ button:disabled {
 .dim-line {
   margin: 0 0 10px;
   font-size: 11.5px;
-  color: var(--text-dim);
+  color: var(--muted);
   font-style: italic;
 }
 
-/* Every "annotation box" (critical flag, guidance enforcement,
-   recommendation, reddit) shares one shape — same radius, padding,
-   label typography, bottom margin. Only the accent color differs per
-   meaning, applied via a second class on the same element. */
+/* Every annotation box (critical flag, guidance enforcement,
+   recommendation, reddit) is a heading + paragraph separated by a thin
+   top rule instead of a colored card — same rhythm as the website's own
+   h2 sections. Only the label text is colored, body stays plain. */
 .box {
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  margin-bottom: var(--sp-4);
-  border: 1px solid var(--border);
-  background: var(--card-bg-2);
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
+  margin-bottom: 14px;
 }
 
 .box-label {
-  margin: 0 0 var(--sp-2);
-  font-size: 11px;
-  font-weight: 800;
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-hi);
+  letter-spacing: 0.03em;
+  color: var(--fg);
 }
 
 .box-body {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--text-mid);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--body-text);
 }
 
-.critical-flag-box.critical-strong {
-  background: var(--red-bg);
-  border-color: #4a2622;
-}
 .critical-flag-box.critical-strong .box-label,
-.critical-flag-box.critical-strong .box-body {
-  color: #ffb9ab;
-}
+.critical-flag-box.critical-strong .box-body { color: var(--red); }
 
-.critical-flag-box.critical-moderate {
-  background: var(--amber-bg);
-  border-color: #4a3c1e;
-}
 .critical-flag-box.critical-moderate .box-label,
-.critical-flag-box.critical-moderate .box-body {
-  color: #ffdfa0;
-}
+.critical-flag-box.critical-moderate .box-body { color: var(--amber); }
 
-.guidance-enforcement-box {
-  border-color: #3a2d52;
-  background: #1d1730;
-}
+.guidance-enforcement-box .box-label { color: var(--red); }
 
-.guidance-enforcement-box .box-label {
-  color: #c7a9ff;
-}
-
-/* Same left edge, font-size and line-height as .box-body — no bullets,
-   no indent, so this reads at the same text position/weight as the
-   critical-flag box's plain paragraph right above it. */
 .guidance-enforcement-list {
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--text-mid);
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--body-text);
 }
 
-.guidance-enforcement-list li {
-  margin-bottom: 6px;
+.guidance-enforcement-list li { margin-bottom: 6px; }
+.guidance-enforcement-list li:last-child { margin-bottom: 0; }
+
+#summary {
+  margin: 0 0 14px;
+  color: var(--body-text);
+  line-height: 1.55;
+  font-size: 13px;
 }
 
-.guidance-enforcement-list li:last-child {
-  margin-bottom: 0;
-}
-
-.recommendation-box .box-label {
-  color: var(--mint);
-}
+.recommendation-box .box-label { color: var(--link); }
 
 .recommendation-text {
-  font-weight: 700;
-  color: var(--text-hi);
+  font-weight: 600;
+  color: var(--fg);
 }
 
 .recommendation-text.muted-italic {
   font-weight: 400;
   font-style: italic;
-  color: var(--text-dim);
+  color: var(--muted);
 }
 
-h3 {
-  font-family: var(--font-body);
-  font-size: 12.5px;
-  font-weight: 800;
-  margin: 12px 0 6px;
-  color: var(--text-hi);
-}
+.list-block { margin-bottom: 14px; }
 
-/* Section headings for plain lists (support/contra) — unified with
-   .box-label typography so a heading reads the same whether it's
-   inside a colored box or sitting directly in the flow. */
 .section-heading {
-  margin: 0 0 var(--sp-2);
-  font-size: 11px;
-  font-weight: 800;
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-hi);
-}
-
-.list-block {
-  margin-bottom: var(--sp-4);
+  letter-spacing: 0.03em;
+  color: var(--fg);
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
 }
 
 .plain-list {
   margin: 0;
   padding-left: 18px;
-  color: var(--text-mid);
+  color: var(--body-text);
 }
 
 .plain-list li {
   margin-bottom: 6px;
   line-height: 1.45;
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
 .secondary-cta {
   width: 100%;
-  background: var(--card-bg-2);
-  color: var(--text-hi);
-  border: 1px solid var(--border);
-  padding: 10px 14px;
-  font-weight: 700;
-  border-radius: 999px;
+  background: var(--bg);
+  color: var(--link);
+  border: 1px solid var(--border-strong);
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
   margin-top: 4px;
-  margin-bottom: var(--sp-4);
+  margin-bottom: 4px;
 }
 
 .secondary-cta:disabled {
@@ -374,42 +373,29 @@ h3 {
   cursor: default;
 }
 
-.reddit-box .box-label {
-  color: var(--mint);
-}
-
-.reddit-verdict-label.rv-good { color: var(--mint); }
+.reddit-box .box-label { color: var(--muted); }
+.reddit-verdict-label.rv-good { color: var(--green); }
 .reddit-verdict-label.rv-mid { color: var(--amber); }
 .reddit-verdict-label.rv-bad { color: var(--red); }
-.reddit-verdict-label.rv-none { color: var(--text-dim); }
+.reddit-verdict-label.rv-none { color: var(--muted); }
 
 .reddit-rec-box {
-  margin-top: var(--sp-3);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
 }
 
-.reddit-rec-box .box-label {
-  margin: 0 0 var(--sp-1);
-}
+.reddit-rec-box .box-label { margin-bottom: 4px; color: var(--link); }
 
 .citation-list {
-  margin: var(--sp-2) 0 0;
+  margin: 8px 0 0;
   padding-left: 16px;
   font-size: 11.5px;
-  color: var(--text-mid);
+  color: var(--body-text);
 }
 
-.citation-list li {
-  margin-bottom: 4px;
-}
-
-.citation-list a {
-  color: var(--mint);
-  text-decoration: none;
-}
-
-.citation-list a:hover {
-  text-decoration: underline;
-}
+.citation-list li { margin-bottom: 4px; }
+.citation-list a { color: var(--link); text-decoration: underline; }
 
 .mood-tags {
   display: flex;
@@ -419,51 +405,46 @@ h3 {
 }
 
 .mood-tag {
-  background: var(--card-bg-2);
-  color: var(--text-hi);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 4px 11px;
-  font-size: 11.5px;
-  font-weight: 700;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .hotspot-moment {
-  color: var(--text-dim);
-  font-weight: 700;
+  color: var(--muted);
+  font-weight: 600;
   margin-right: 4px;
 }
 
 .consensus-lean-label {
   margin: 0 0 8px;
   font-size: 15px;
-  font-weight: 800;
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: var(--radius-md);
+  font-weight: 700;
+  display: block;
+  padding: 0;
 }
 
-.lean-good { background: var(--mint); color: var(--mint-text); }
-.lean-mid { background: var(--amber); color: var(--amber-text); }
-.lean-bad { background: var(--red); color: var(--red-text); }
-.lean-none { background: var(--card-bg-2); color: var(--text-mid); border: 1px solid var(--border); }
+.lean-good { color: var(--green); }
+.lean-mid { color: var(--amber); }
+.lean-bad { color: var(--red); }
+.lean-none { color: var(--muted); }
 
 .authenticity-box {
-  background: var(--card-bg-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
   margin-bottom: 12px;
 }
 
-.authenticity-box .consensus-lean-label {
-  margin-bottom: 4px;
-}
+.authenticity-box .consensus-lean-label { margin-bottom: 4px; }
 
 ul {
   margin: 0;
   padding-left: 18px;
-  color: var(--text-mid);
+  color: var(--body-text);
 }
 
 li {
@@ -471,21 +452,24 @@ li {
   line-height: 1.4;
 }
 
-#summary {
-  margin: 0 0 var(--sp-4);
-  color: var(--text-mid);
-  line-height: 1.55;
-  font-size: 13px;
+h3 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 12px 0 6px;
+  color: var(--fg);
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
 }
 
-/* Usage/footnote line: deliberately the LAST, quietest thing in the
-   whole scroll — metadata about the analysis itself, not part of the
-   argument, so it now always sits at the very bottom instead of being
-   sprinkled mid-flow between content sections. */
+/* Usage/footnote line — deliberately the last, quietest thing on the
+   page: metadata about the analysis, not part of the argument. */
 .usage-line {
-  margin: var(--sp-2) 0 0;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-strong);
   font-size: 11px;
+  color: var(--muted);
   line-height: 1.5;
 }

@@ -598,6 +598,27 @@ $('dashboardBtn').addEventListener('click', () =>
   chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') })
 );
 
+// Dark mode toggle — literal color inversion of the same minimalist skin
+// (see popup.css body.dark), persisted in chrome.storage.local (shared key
+// with dashboard.js) so the choice carries over between the popup and the
+// dashboard tab. Icon swaps sun (light active, click for dark) <-> moon
+// (dark active, click for light).
+function applyMode(isDark) {
+  document.body.classList.toggle('dark', isDark);
+  const btn = $('modeToggleBtn');
+  btn.innerHTML = isDark ? '&#9790;' : '&#9728;';
+  btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  btn.setAttribute('aria-label', btn.title);
+}
+
+chrome.storage.local.get('uiDarkMode').then(({ uiDarkMode }) => applyMode(!!uiDarkMode));
+
+$('modeToggleBtn').addEventListener('click', async () => {
+  const isDark = !document.body.classList.contains('dark');
+  applyMode(isDark);
+  await chrome.storage.local.set({ uiDarkMode: isDark });
+});
+
 $('analyzeBtn').addEventListener('click', async () => {
   $('analyzeBtn').disabled = true;
   setStatus('Working…');

@@ -136,6 +136,10 @@ const SAFE_INNERHTML_EXPRESSIONS = new Set([
   "entry.helpful === false ? 'active-down' : ''",
   "g.active !== false ? 'checked' : ''",
   "isCritical ? '<span class=\"g-severity-critical\" title=\"Creator genuineness/trust rule — can force a low rating\">CRITICAL</span>' : ''",
+  // Same isCritical flag, now also rendered as a static tag-pill string
+  // (g-tag-critical) in the minimalist dashboard's right-hand tags column
+  // — same hardcoded literal, no interpolated rule/user data inside it.
+  "isCritical ? '<span class=\"g-tag g-tag-critical\">Critical</span>' : ''",
   'appliedLabel', 'fmtRelDate(g.createdAt)',
   // Functions verified elsewhere in this file to internally call
   // escapeHtml() on every dynamic value they interpolate: resultCell()
